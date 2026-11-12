@@ -72,9 +72,13 @@ aplicación). Hoy el embed lleva enlaces por plataforma; cuando me pases
 - Todo queda registrado: tickets, sanciones y canjes tienen log en el servidor.
 
 ## 4. Tiendas (cuando pagues la suscripción, avísame)
+- [x] **APK de Android publicada**: `releases/NexoFPS-1.6.0-android.apk` — APK
+  nativa firmada, lista para instalar en cualquier Android 5.0+ (fue construida
+  con JDK 17 + build-tools 34 en el entorno; se regenera con
+  `sh game/scripts/build-android.sh`).
 - [ ] **Google Play Store**: cuenta de desarrollador (25 USD, una vez). Al tenerla:
-  subimos el APK generado desde `game/android/` (guía en `docs/OPERATIONS.md`) y
-  la página `/download/android` pasará a enlazar la tienda.
+  subimos esta misma APK (o un AAB regenerado) y la página `/download/android`
+  pasará a enlazar la tienda.
 - [ ] **App Store**: cuenta Apple Developer (99 USD/año) + un Mac con Xcode para
   firmar. Al tenerla: TestFlight primero, luego App Store; `/download/ios` se actualiza.
 - [ ] **Steam / itch.io (opcional PC)**: si quieres distribución de escritorio en
@@ -92,6 +96,6 @@ aplicación). Hoy el embed lleva enlaces por plataforma; cuando me pases
 |---|---|---|
 | Token de BotFather de Telegram | avisos de ventas/reportes/baneos | `game/.env` |
 | Token de bot de Discord | bot de verificación, canjes y perfil | `game/.env` |
-| Cuenta de Play Store | publicar APK | consola de Google Play |
+| Cuenta de Play Store | publicar la APK ya construida en la tienda | consola de Google Play |
 | Cuenta Apple Developer | publicar iOS | App Store Connect |
 | Códigos/promos que quieras regalar | `#códigos-activos` | los cargo en el servidor |

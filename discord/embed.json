@@ -24,8 +24,13 @@
           "inline": true
         },
         {
-          "name": "📱 Android / iOS / navegador del teléfono",
-          "value": "[NexoFPS-1.6.0-web-standalone.zip — un solo HTML con controles táctiles](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-web-standalone.zip). APK nativo: cuando se publique en Play Store / App Store, aquí irá el botón de la tienda.",
+          "name": "🤖 Android (APK)",
+          "value": "[NexoFPS-1.6.0-android.apk — APK nativa firmada, Android 5.0+](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-android.apk)",
+          "inline": true
+        },
+        {
+          "name": "📱 iOS / navegador del teléfono",
+          "value": "[NexoFPS-1.6.0-web-standalone.zip — un solo HTML con controles táctiles](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-web-standalone.zip). iOS: requiere Xcode/App Store (cuando se active la cuenta de desarrollador).",
           "inline": false
         },
         {

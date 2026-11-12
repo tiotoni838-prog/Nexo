@@ -76,9 +76,13 @@ con botones por plataforma):
 - **[NexoFPS-1.6.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-servidor.zip)** —
   servidor dedicado (Node.js 20+) con tienda PayPal y panel de ganancias.
 
-Android (APK) e iOS: el proyecto WebView nativo se empaqueta con Android Studio /
-Xcode — instrucciones en `docs/OPERATIONS.md` (no se alojan binarios sin build
-verificada de esos IDE).
+- **[NexoFPS-1.6.0-android.apk](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-android.apk)** —
+  **APK nativa de Android** (WebView a pantalla completa, controles táctiles,
+  minSdk 21 / Android 5.0+, firmada). Descárgala en el teléfono, permite
+  «Instalar apps desconocidas» e instala. Se regenera con
+  `sh game/scripts/build-android.sh` (JDK 17 + SDK build-tools 34).
+- **iOS**: requiere Xcode en un Mac para firmar (los iPhone no instalan APK);
+  cuando se active la App Store, `/download/ios` enlazará la tienda.
 
 Para anunciar el juego en **Discord**: guía y embed listos en [`discord/DISCORD.md`](discord/DISCORD.md).
 

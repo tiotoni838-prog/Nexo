@@ -16,6 +16,10 @@
   (Node.js 20+), con tienda PayPal, panel de ganancias, cuentas con 2FA,
   amigos, clanes, rankings y códigos de canje.
 
+- **NexoFPS-1.6.0-android.apk** — **APK nativa de Android** (WebView a pantalla
+  completa, controles táctiles, Android 5.0+, firmada). Descárgala en el
+  teléfono, permite «Instalar apps desconocidas» e instala.
+
 ### Android (APK) e iOS
 
 Cada dispositivo tiene su forma de descarga:

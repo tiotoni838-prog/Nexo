@@ -69,15 +69,16 @@ const PLATFORM_SPECS: Record<DownloadPlatform, PlatformSpec> = {
   android: {
     title: 'Android (APK)',
     icon: '🤖',
-    status: 'store',
+    status: 'ready',
+    file: `${REPO_RAW}/NexoFPS-${GAME_VERSION}-android.apk`,
     steps: [
-      'Mientras el juego esté en Play Store, el APK se empaqueta con Android Studio:',
-      'Instala <a href="https://developer.android.com/studio">Android Studio</a> (gratis).',
-      'Abre el proyecto WebView de <code>game/android/</code> (guía en <code>docs/OPERATIONS.md</code>).',
-      'Menú <b>Build → Build APK(s)</b> y transfiere el APK al teléfono.',
-      'En el teléfono permite «Instalar apps desconocidas» para instalarlo.',
+      'Descarga el APK directamente en tu teléfono con el botón de arriba.',
+      'Si tu navegador avisa, permite «Instalar apps desconocidas» para Nexo FPS (solo la primera vez).',
+      'Abre el APK descargado y pulsa <b>Instalar</b>.',
+      'Abre «Nexo FPS» desde el cajón de aplicaciones: pantalla completa y controles táctiles.',
+      'Para jugar online, conéctate al servidor de tu host (WebSocket) desde el menú Unirse.',
     ],
-    note: 'Cuando el propietario active la cuenta de desarrollador de Play Store (25 USD una vez), la descarga oficial será desde la tienda y esta página lo enlazará.',
+    note: 'APK firmada (minSdk 21, Android 5.0+). Cuando el propietario active la cuenta de desarrollador de Play Store (25 USD una vez), la descarga oficial será desde la tienda y esta página lo enlazará.',
   },
   ios: {
     title: 'iOS / iPhone',

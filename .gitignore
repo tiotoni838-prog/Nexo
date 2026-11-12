@@ -6,3 +6,8 @@ dist/
 .env.*
 godot/.godot/
 dist-desktop/
+
+# Build de Android (artefactos y keystore de firma)
+game/android/build/
+game/android/assets/
+game/android/debug.keystore

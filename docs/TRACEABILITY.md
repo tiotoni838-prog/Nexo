@@ -115,6 +115,7 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 | 9 personajes con rol (6 roles cubiertos) | `shared/characters.ts`: campo `role` + Kael (atacante), Bruno (defensor), Nova (explorador), reutilizan habilidades existentes del sim | `test/abilities.test.ts` (9 personajes, 6 roles, cooldowns) | ídem |
 | Zonas de loot por nivel (alto/medio/bajo) | `shared/map.ts`: `LootTier` en los 24 POIs, spawns 10–14 / 6–9 / 3–5 según tier | `test/content.test.ts` (tiers válidos, zonas altas con más spawns) | ídem |
 | Binarios nativos 1.6.0 (Windows/Linux, Electron 33) | `npm run desktop` + poda; zips <100 MB en `releases/` | tamaños verificados (95 MiB / 87 MiB) | — |
+| APK nativa de Android (WebView, firmada) | `android/AndroidManifest.xml` + `android/src` (MainActivity WebView fullscreen) + `scripts/build-android.sh` (aapt2/javac/d8/zipalign/apksigner) | `aapt2 dump badging` (com.nexofps.app 1.6.0, minSdk 21) + `apksigner verify` ✓ | `releases/NexoFPS-1.6.0-android.apk` (74 KB) |
 
 ## Bloqueos registrados
 
