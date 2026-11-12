@@ -57,6 +57,18 @@ trabajo) y el **vertical slice jugable** en `game/`.
   (`ADMIN_TOKEN`) que consulta la API de transacciones de PayPal y muestra total USD,
   número de operaciones y desglose por artículo. Endpoint JSON: `/api/admin/earnings?days=N`.
 
+## Descargar y jugar (v1.0.0)
+
+En la carpeta [`releases/`](releases/) del repo:
+
+- **[NexoFPS-1.0.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.0.0-web-standalone.zip)** —
+  el juego completo en UN archivo HTML. Descomprime, abre `NexoFPS.html` con doble clic
+  y juega contra bots sin internet. Windows / macOS / Linux.
+- **[NexoFPS-1.0.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.0.0-servidor.zip)** —
+  servidor dedicado (Node.js 20+) con tienda PayPal y panel de ganancias.
+
+Para generar el standalone localmente: `cd game && npm run bundle`.
+
 ## Ejecutar
 
 ```bash
