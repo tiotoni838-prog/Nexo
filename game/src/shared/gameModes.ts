@@ -11,7 +11,11 @@ export type GameModeId =
   | 'escuadron'
   | 'clasificatorio'
   | 'rapido'
+  | 'mini'
   | 'solo-pistolas'
+  | 'francotiradores'
+  | 'armas-gigantes'
+  | 'noche'
   | 'infectados'
   | 'tdm'
   | 'practica'
@@ -26,6 +30,10 @@ export interface GameModeDef {
   teamSize: number;
   zoneSpeedMult: number;
   allowedWeapons?: WeaponId[];
+  /** Multiplicador de daño de armas (modo "armas gigantes"). */
+  damageMult?: number;
+  /** Fuerza noche permanente (linterna/visibilidad reducida en el cliente). */
+  forcedNight?: boolean;
   descEs: string;
   descEn: string;
 }
@@ -56,11 +64,32 @@ export const GAME_MODES: Record<GameModeId, GameModeDef> = {
     teamSize: 1, zoneSpeedMult: 2.2,
     descEs: 'Partidas cortas: la zona cierra al doble de velocidad.', descEn: 'Short matches: zone closes twice as fast.',
   },
+  mini: {
+    id: 'mini', nameEs: 'Mini BR', nameEn: 'Mini BR', implemented: true, ranked: false,
+    teamSize: 1, zoneSpeedMult: 3,
+    descEs: 'Mapa pequeño y zona veloz: partidas de 5 minutos.', descEn: 'Small map, fast zone: 5-minute matches.',
+  },
   'solo-pistolas': {
     id: 'solo-pistolas', nameEs: 'Solo Pistolas', nameEn: 'Pistols Only', implemented: true, ranked: false,
     teamSize: 1, zoneSpeedMult: 1.4,
     allowedWeapons: ['pistola', 'revolver'],
     descEs: 'Solo pistolas y revólveres caen del cielo.', descEn: 'Only pistols and revolvers drop.',
+  },
+  francotiradores: {
+    id: 'francotiradores', nameEs: 'Solo Francotiradores', nameEn: 'Snipers Only', implemented: true, ranked: false,
+    teamSize: 1, zoneSpeedMult: 1,
+    allowedWeapons: ['francotirador', 'precision'],
+    descEs: 'Solo armas de largo alcance: puntería pura.', descEn: 'Long-range weapons only: pure aim.',
+  },
+  'armas-gigantes': {
+    id: 'armas-gigantes', nameEs: 'Armas Gigantes', nameEn: 'Giant Weapons', implemented: true, ranked: false,
+    teamSize: 1, zoneSpeedMult: 1.2, damageMult: 2,
+    descEs: 'Todo hace el doble de daño y suena el doble de fuerte.', descEn: 'Everything deals double damage.',
+  },
+  noche: {
+    id: 'noche', nameEs: 'Modo Noche', nameEn: 'Night Mode', implemented: true, ranked: false,
+    teamSize: 1, zoneSpeedMult: 1, forcedNight: true,
+    descEs: 'Oscuridad permanente: linternas y emboscadas.', descEn: 'Permanent darkness: flashlights and ambushes.',
   },
   infectados: {
     id: 'infectados', nameEs: 'Infectados', nameEn: 'Infected', implemented: false, ranked: false,
@@ -94,6 +123,6 @@ export const isWeaponAllowedInMode = (mode: GameModeDef, weaponId: WeaponId): bo
 
 export const mapForMode = (modeId: GameModeId, seed: number): MapPresetId => {
   const presets: MapPresetId[] = ['nexo-urbano', 'desierto-solar', 'volcan-ceniza'];
-  if (modeId === 'rapido') return presets[seed % presets.length]!;
+  if (modeId === 'rapido' || modeId === 'mini') return presets[seed % presets.length]!;
   return 'nexo-urbano';
 };

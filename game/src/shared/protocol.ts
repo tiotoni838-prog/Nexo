@@ -13,6 +13,7 @@ export interface HelloMsg {
   name: string;
   lang?: 'es' | 'en';
   characterId?: CharacterId;
+  petId?: string;
 }
 
 export interface InputMsg {
@@ -28,9 +29,20 @@ export interface InputMsg {
 
 export interface ActionMsg {
   t: 'action';
-  kind: 'pickup' | 'reload' | 'use' | 'swap' | 'dropWeapon' | 'throwGrenade' | 'ability';
+  kind: 'pickup' | 'reload' | 'use' | 'swap' | 'dropWeapon' | 'throwGrenade' | 'ability' | 'enterVehicle';
   slot?: number;
   consumable?: ConsumableId;
+}
+
+export interface NetVehicle {
+  id: number;
+  kind: string;
+  x: number;
+  y: number;
+  aim: number;
+  hp: number;
+  maxHp: number;
+  driverId: number | null;
 }
 
 export interface DropChoiceMsg {
@@ -119,6 +131,8 @@ export interface SnapshotMsg {
   items: NetItem[];
   walls: NetWall[];
   redZone?: { x: number; y: number; r: number } | null;
+  vehicles?: NetVehicle[];
+  night?: boolean;
   you: { hp: number; shield: number; ammo: number; mag: number; botiquines: number; escudos: number; grenades: number; activeSlot: number; weapons: Array<{ weaponId: WeaponId; rarity: Rarity; ammoInMag: number } | null>; reloading: boolean; characterId: CharacterId; abilityCooldownMs: number; prone: boolean } | null;
 }
 
@@ -142,7 +156,7 @@ export interface PhaseMsg {
 
 export interface EventMsg {
   t: 'event';
-  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone' | 'explosion' | 'airdrop' | 'ability';
+  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone' | 'explosion' | 'airdrop' | 'ability' | 'vehicle';
   abilityId?: AbilityId;
   killerId?: number;
   killerName?: string;

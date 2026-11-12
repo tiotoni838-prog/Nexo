@@ -10,6 +10,8 @@ import {
 import { AntiCheatMonitor } from '../shared/antiCheat.js';
 import type { MapPresetId } from '../shared/map.js';
 import type { GameModeId } from '../shared/gameModes.js';
+import { VEHICLES } from '../shared/vehicles.js';
+import { isPetId, type PetId } from '../shared/pets.js';
 import { WORLD_RADIUS } from '../shared/constants.js';
 import { itemLabelEs } from '../shared/loot.js';
 import type {
@@ -34,6 +36,8 @@ export interface GameServerOptions {
   autoStartLobbyMs?: number;
   mapId?: MapPresetId;
   modeId?: GameModeId;
+  petId?: PetId | null;
+  petLevel?: number;
   onTick?: (sim: MatchSim) => void;
 }
 
@@ -109,6 +113,8 @@ export class GameServer {
       dropPhaseMs: 8000,
       mapId: options.mapId,
       modeId: options.modeId,
+      petId: options.petId ?? null,
+      petLevel: options.petLevel ?? 1,
     });
     this.antiCheat = new AntiCheatMonitor();
   }
@@ -178,6 +184,10 @@ export class GameServer {
         }
         client.name = sanitizeName(msg.name);
         const player = this.sim.addPlayer(client.name, false, msg.characterId);
+        if (msg.petId && isPetId(msg.petId)) {
+          player.petId = msg.petId;
+          player.petLevel = 1;
+        }
         client.playerId = player.id;
         client.joined = true;
         client.connection.send({
@@ -230,6 +240,9 @@ export class GameServer {
             break;
           case 'ability':
             this.sim.useAbility(pid);
+            break;
+          case 'enterVehicle':
+            this.sim.toggleVehicle(pid);
             break;
         }
         return;
@@ -390,6 +403,17 @@ export class GameServer {
             r: Math.round(this.sim.redZone.r),
           }
         : null,
+      vehicles: this.sim.vehicles.map((v) => ({
+        id: v.id,
+        kind: v.kind,
+        x: Math.round(v.x),
+        y: Math.round(v.y),
+        aim: Math.round(v.aim * 100) / 100,
+        hp: Math.round(v.hp),
+        maxHp: VEHICLES[v.kind].hp,
+        driverId: v.driverId,
+      })),
+      night: this.sim.mode.forcedNight === true,
     };
 
     for (const client of this.clients.values()) {

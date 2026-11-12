@@ -59,3 +59,47 @@ export const canFreeSpin = (lastFreeSpinMs: number, nowMs: number): boolean =>
 
 export const nextFreeSpinMs = (lastFreeSpinMs: number, nowMs: number): number =>
   Math.max(0, lastFreeSpinMs + FREE_SPIN_COOLDOWN_MS - nowMs);
+
+/* ===== Pity system: premios garantizados ===== */
+
+export const PITY_EPIC_SPINS = 10;
+export const PITY_LEGENDARY_SPINS = 50;
+
+export interface PityState {
+  sinceEpic: number;
+  sinceLegendary: number;
+}
+
+export const emptyPity = (): PityState => ({ sinceEpic: 0, sinceLegendary: 0 });
+
+export const pityGuarantee = (state: PityState): 'epico' | 'legendario' | null => {
+  if (state.sinceLegendary >= PITY_LEGENDARY_SPINS - 1) return 'legendario';
+  if (state.sinceEpic >= PITY_EPIC_SPINS - 1) return 'epico';
+  return null;
+};
+
+export const updatePity = (state: PityState, prize: RoulettePrize): PityState => {
+  const sinceEpic = prize.rarity === 'epico' || prize.rarity === 'legendario' ? 0 : state.sinceEpic + 1;
+  const sinceLegendary = prize.rarity === 'legendario' ? 0 : state.sinceLegendary + 1;
+  return { sinceEpic, sinceLegendary };
+};
+
+const pickByRarity = (rarity: RoulettePrize['rarity'], rng: RngLike): RoulettePrize => {
+  const pool = ROULETTE_POOL.filter((p) => p.rarity === rarity);
+  let roll = rng.next() * pool.reduce((s, p) => s + p.weight, 0);
+  for (const prize of pool) {
+    roll -= prize.weight;
+    if (roll <= 0) return prize;
+  }
+  return pool[0]!;
+};
+
+/** Giro con garantías: respeta probabilidades salvo cuando el pity se activa. */
+export const spinRouletteWithPity = (
+  pity: PityState,
+  rng: RngLike = new Rng(Date.now() ^ (Math.random() * 0xffffffff)),
+): { prize: RoulettePrize; pity: PityState; guaranteed: boolean } => {
+  const guarantee = pityGuarantee(pity);
+  const prize = guarantee ? pickByRarity(guarantee, rng) : spinRoulette(rng);
+  return { prize, pity: updatePity(pity, prize), guaranteed: guarantee !== null };
+};

@@ -16,9 +16,12 @@ import {
 import {
   ROULETTE_POOL,
   ROULETTE_SPIN_COST_DALOS,
-  spinRoulette,
+  PITY_EPIC_SPINS,
+  PITY_LEGENDARY_SPINS,
+  spinRouletteWithPity,
   canFreeSpin,
   nextFreeSpinMs,
+  type PityState,
 } from '../shared/roulette.js';
 import {
   emptyLocker,
@@ -63,6 +66,8 @@ const KEYS = {
   passXp: 'nexo_pass_xp',
   passPremium: 'nexo_pass_premium',
   lastFreeSpin: 'nexo_last_free_spin',
+  pitySinceEpic: 'nexo_pity_since_epic',
+  pitySinceLegendary: 'nexo_pity_since_legendary',
   mastery: 'nexo_mastery',
   missions: 'nexo_missions',
   totals: 'nexo_totals',
@@ -405,9 +410,35 @@ const renderRoulette = (): void => {
     btn.classList.remove('primary');
   }
   const chances = $('rouletteChances');
-  chances.innerHTML = ROULETTE_POOL.map(
-    (p) => `<div class="chance rarity-${p.rarity}">${p.labelEs} — ${((p.weight / ROULETTE_POOL.reduce((s, x) => s + x.weight, 0)) * 100).toFixed(1)}%</div>`,
-  ).join('');
+  const pity = readPity();
+  const pityText =
+    l === 'es'
+      ? `Garantía: épico en ${Math.max(0, PITY_EPIC_SPINS - pity.sinceEpic)} giros · legendario en ${Math.max(0, PITY_LEGENDARY_SPINS - pity.sinceLegendary)}`
+      : `Guarantee: epic in ${Math.max(0, PITY_EPIC_SPINS - pity.sinceEpic)} spins · legendary in ${Math.max(0, PITY_LEGENDARY_SPINS - pity.sinceLegendary)}`;
+  chances.innerHTML =
+    `<div class="muted" style="margin-bottom:6px">${pityText}</div>` +
+    ROULETTE_POOL.map(
+      (p) => `<div class="chance rarity-${p.rarity}">${p.labelEs} — ${((p.weight / ROULETTE_POOL.reduce((s, x) => s + x.weight, 0)) * 100).toFixed(1)}%</div>`,
+    ).join('');
+};
+
+const readPity = (): PityState => ({
+  sinceEpic: readNum(KEYS.pitySinceEpic),
+  sinceLegendary: readNum(KEYS.pitySinceLegendary),
+});
+
+const writePity = (pity: PityState): void => {
+  writeNum(KEYS.pitySinceEpic, pity.sinceEpic);
+  writeNum(KEYS.pitySinceLegendary, pity.sinceLegendary);
+};
+
+/** SKU de la mascota equipada → id de mascota para la simulación. */
+export const equippedPetId = (): string | undefined => {
+  const sku = readLocker().equipped.mascota;
+  if (!sku) return undefined;
+  if (sku.startsWith('nx-mascota-')) return sku.replace('nx-mascota-', '');
+  if (sku === 'dalo-mascota-fenix') return 'dragon';
+  return undefined;
 };
 
 const doSpin = (): void => {
@@ -423,11 +454,13 @@ const doSpin = (): void => {
   } else {
     writeNum(KEYS.lastFreeSpin, Date.now());
   }
-  const prize = spinRoulette();
+  const { prize, pity, guaranteed } = spinRouletteWithPity(readPity());
+  writePity(pity);
   if (prize.kind === 'nx' && prize.amount) addNx(prize.amount);
   if (prize.sku) writeLocker(ownItem(readLocker(), prize.sku));
   const result = $('rouletteResult');
-  result.textContent = `🎁 ${l === 'es' ? prize.labelEs : prize.labelEn}`;
+  const gar = guaranteed ? (l === 'es' ? ' (garantizado) ' : ' (guaranteed) ') : ' ';
+  result.textContent = `🎁${gar}${l === 'es' ? prize.labelEs : prize.labelEn}`;
   result.className = `roulette-result rarity-${prize.rarity}`;
   renderMeta();
 };

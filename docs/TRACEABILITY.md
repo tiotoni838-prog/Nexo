@@ -93,6 +93,20 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 | Lista viva de tareas/credenciales del propietario | `docs/TAREAS-DUENO.md` | manual | — |
 | Binarios nativos 1.4.0 (Windows/Linux, Electron 33) | `npm run desktop` + poda; zips <100 MB en `releases/` | tamaños verificados (95 MiB / 87 MiB) | — |
 
+## v1.5.0 — vehículos, mascotas, modos y pity
+
+| Función | Implementación | Verificación | Evidencia |
+|---|---|---|---|
+| Vehículos terrestres/acuáticos (conducir, atropellar, explotar) | `shared/vehicles.ts` (catálogo + spawns deterministas), `shared/sim.ts` (Vehicle, toggleVehicle, stepVehicles, runOverDamageAt, explosión con eyección y evento) | `test/vehiclesPets.test.ts` (13 tests) | `npm test` 131/131 ✓ |
+| 6 mascotas con bonos pasivos y niveles | `shared/pets.ts` (petLevelFromMatches, petEffective), bonos en `sim.ts` (speedMult, healMult, ammoBonus, lootRadius) | `test/vehiclesPets.test.ts` | ídem |
+| 4 modos nuevos (Mini BR, Francotiradores, Armas Gigantes, Noche) | `shared/gameModes.ts` (14 modos, damageMult/forcedNight, allowedWeapons), noche forzada en `client/render.ts` | `test/vehiclesPets.test.ts` + `gameModes` en `test/accounts.test.ts` (14/8) | ídem |
+| Pity system de ruleta con contadores visibles | `shared/roulette.ts` (PITY_EPIC_SPINS=10, PITY_LEGENDARY_SPINS=50, spinRouletteWithPity), persistencia en `client/meta.ts` | `test/vehiclesPets.test.ts` (garantías y giro garantizado) | ídem |
+| Protocolo y red de vehículos/mascotas | `shared/protocol.ts` (NetVehicle, SnapshotMsg.vehicles/night, ActionMsg 'enterVehicle', HelloMsg.petId), `server/gameServer.ts` (toggleVehicle, snapshot vehicles+night) | smoke v1.5.0 6/6 ✓ | — |
+| Render de vehículos y noche forzada | `client/render.ts` (drawVehicles con vida por color, currentDarkness con night) | manual + smoke | — |
+| Mascotas en tienda NX (6 nuevas) | `paypal/store.ts` (nx-mascota-cachorro…dragon) + `equippedPetId()` en `client/meta.ts` | smoke: catálogo con `nx-mascota-dragon` ✓ | — |
+| Biblia del juego (12 áreas, estado y hoja de ruta) | `docs/BIBLIA-DEL-JUEGO.md` | manual | — |
+| Binarios nativos 1.5.0 (Windows/Linux, Electron 33) | `npm run desktop` + poda; zips <100 MB en `releases/` | tamaños verificados (95 MiB / 87 MiB) | — |
+
 ## Bloqueos registrados
 
 1. **APK/AAB e iOS firmados**: requieren Android Studio / Xcode (no disponibles en el

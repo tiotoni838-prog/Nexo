@@ -43,6 +43,14 @@ import {
 import { initialZone, isOutsideZone, updateZone, zoneDps, type ZoneState } from './zone.js';
 import { sanitizeName } from './validation.js';
 import {
+  VEHICLES,
+  isVehicleId,
+  runOverDamageAt,
+  vehicleSpawnsForMap,
+  type VehicleId,
+} from './vehicles.js';
+import { PETS, isPetId, petEffective, type PetId } from './pets.js';
+import {
   CHARACTERS,
   CHARACTER_IDS,
   COVER_WALL,
@@ -66,6 +74,18 @@ export interface PlayerInput {
   seq: number;
   slide?: boolean;
   prone?: boolean;
+}
+
+export interface Vehicle {
+  id: number;
+  kind: VehicleId;
+  x: number;
+  y: number;
+  aim: number;
+  hp: number;
+  driverId: number | null;
+  speedFrac: number;
+  lastRunOverMs: number;
 }
 
 export interface SimPlayer {
@@ -95,6 +115,8 @@ export interface SimPlayer {
   sliding: boolean;
   slideEndsAtMs: number;
   nextSlideMs: number;
+  petId: PetId | null;
+  petLevel: number;
 }
 
 export interface CoverWall {
@@ -132,7 +154,7 @@ export interface Grenade {
 }
 
 export interface SimEvent {
-  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone' | 'explosion' | 'airdrop' | 'ability';
+  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone' | 'explosion' | 'airdrop' | 'ability' | 'vehicle';
   killerId?: number;
   killerName?: string;
   victimId?: number;
@@ -151,6 +173,8 @@ export interface MatchConfig {
   dropPhaseMs: number;
   mapId?: MapPresetId;
   modeId?: GameModeId;
+  petId?: PetId | null;
+  petLevel?: number;
 }
 
 const BOT_NAMES_ES = [
@@ -204,6 +228,7 @@ export class MatchSim {
   grenades: Grenade[] = [];
   items: GroundItem[] = [];
   walls: CoverWall[] = [];
+  vehicles: Vehicle[] = [];
   airdropTimerMs = 45_000;
   redZone: { x: number; y: number; r: number; untilMs: number } | null = null;
   redZoneNextMs = 50_000;
@@ -217,6 +242,7 @@ export class MatchSim {
   private nextBulletId = 1;
   private nextGrenadeId = 1;
   private nextWallId = 1;
+  private nextVehicleId = 1;
   private nextPlacement = 0;
   private totalPlayers = 0;
 
@@ -244,10 +270,27 @@ export class MatchSim {
         }
       }
     }
+    for (const spawn of vehicleSpawnsForMap(this.map.presetId, WORLD_RADIUS)) {
+      const def = VEHICLES[spawn.id];
+      this.vehicles.push({
+        id: this.nextVehicleId++,
+        kind: spawn.id,
+        x: spawn.x,
+        y: spawn.y,
+        aim: this.rng.range(0, Math.PI * 2),
+        hp: def.hp,
+        driverId: null,
+        speedFrac: 0,
+        lastRunOverMs: -9999,
+      });
+    }
     for (let i = 0; i < config.botCount; i++) {
       this.addBot(`BOT ${BOT_NAMES_ES[i % BOT_NAMES_ES.length]}`);
     }
+    this.configPet = config.petId && isPetId(config.petId) ? { id: config.petId, level: config.petLevel ?? 1 } : null;
   }
+
+  private configPet: { id: PetId; level: number } | null;
 
   private randomSpawn(): Vec2 {
     for (let i = 0; i < 50; i++) {
@@ -291,6 +334,8 @@ export class MatchSim {
       sliding: false,
       slideEndsAtMs: -1,
       nextSlideMs: 0,
+      petId: !bot && this.configPet ? this.configPet.id : null,
+      petLevel: !bot && this.configPet ? this.configPet.level : 1,
     };
     this.players.push(player);
     this.totalPlayers += 1;
@@ -333,6 +378,116 @@ export class MatchSim {
     const player = this.players.find((p) => p.id === playerId);
     if (!player || !player.alive) return;
     player.input = normalizeInput({ ...input, aim: input.aim });
+  }
+
+  vehicleOf(playerId: number): Vehicle | null {
+    return this.vehicles.find((v) => v.driverId === playerId) ?? null;
+  }
+
+  /** Subirse al vehículo más cercano (≤ 70 px) o bajarse del actual. */
+  toggleVehicle(playerId: number): boolean {
+    if (this.phase !== 'play') return false;
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || !player.alive || player.landing) return false;
+    const current = this.vehicleOf(playerId);
+    if (current) {
+      current.driverId = null;
+      current.speedFrac = 0;
+      player.x = current.x + Math.cos(current.aim + Math.PI / 2) * (PLAYER_RADIUS + 26);
+      player.y = current.y + Math.sin(current.aim + Math.PI / 2) * (PLAYER_RADIUS + 26);
+      return true;
+    }
+    let best: Vehicle | null = null;
+    let bestD = 70;
+    for (const v of this.vehicles) {
+      if (v.driverId !== null) continue;
+      const d = dist(player, v);
+      if (d < bestD) {
+        bestD = d;
+        best = v;
+      }
+    }
+    if (!best) return false;
+    best.driverId = player.id;
+    best.speedFrac = 0;
+    return true;
+  }
+
+  private drivingVehicle(player: SimPlayer): Vehicle | null {
+    return this.vehicleOf(player.id);
+  }
+
+  private stepVehicles(dtMs: number): void {
+    for (const v of this.vehicles) {
+      const def = VEHICLES[v.kind];
+      if (v.driverId === null) {
+        v.speedFrac = Math.max(0, v.speedFrac - dtMs / 1200);
+        continue;
+      }
+      if (v.hp <= 0) continue;
+      const driver = this.players.find((p) => p.id === v.driverId);
+      if (!driver || !driver.alive) {
+        v.driverId = null;
+        v.speedFrac = 0;
+        continue;
+      }
+      const throttle = driver.input.my;
+      const steer = driver.input.mx;
+      v.aim += steer * 2.2 * (dtMs / 1000) * (0.4 + v.speedFrac * 0.6);
+      const accel = throttle !== 0 ? 1 : -0.5;
+      v.speedFrac = clamp(v.speedFrac + accel * (dtMs / 1000), 0, 1);
+      const speed = def.speed * PLAYER_SPEED * v.speedFrac * (throttle < 0 ? -0.5 : 1) * (dtMs / 1000);
+      let nx = v.x + Math.cos(v.aim) * speed;
+      let ny = v.y + Math.sin(v.aim) * speed;
+      nx = clamp(nx, -WORLD_RADIUS + 30, WORLD_RADIUS - 30);
+      ny = clamp(ny, -WORLD_RADIUS + 30, WORLD_RADIUS - 30);
+      let blocked = false;
+      for (const o of this.map.obstacles) {
+        if (circleHitsObstacle(nx, ny, 24, [o])) {
+          blocked = true;
+          break;
+        }
+      }
+      if (blocked) {
+        v.speedFrac *= 0.4;
+        v.hp -= 6;
+      } else {
+        v.x = nx;
+        v.y = ny;
+      }
+      driver.x = v.x;
+      driver.y = v.y;
+      driver.aim = v.aim;
+
+      if (v.speedFrac > 0.25 && this.timeMs - v.lastRunOverMs > 700) {
+        for (const p of this.players) {
+          if (!p.alive || p.id === v.driverId || p.landing) continue;
+          if (dist(p, v) < 30) {
+            const killer = this.players.find((k) => k.id === v.driverId) ?? null;
+            this.applyDamage(p, runOverDamageAt(v.kind, v.speedFrac), killer);
+            v.lastRunOverMs = this.timeMs;
+            break;
+          }
+        }
+      }
+    }
+    const broken = this.vehicles.filter((v) => v.hp <= 0);
+    if (broken.length > 0) {
+      for (const v of broken) {
+        this.explodeAt(v.x, v.y, v.driverId ?? 0, 90, 140);
+        if (v.driverId !== null) {
+          const driver = this.players.find((p) => p.id === v.driverId);
+          if (driver && driver.alive) {
+            driver.x = v.x + 34;
+            driver.y = v.y + 34;
+            this.applyDamage(driver, 45, null);
+          }
+          v.driverId = null;
+        }
+        this.events.push({ kind: 'vehicle', x: v.x, y: v.y });
+      }
+      this.vehicles = this.vehicles.filter((v) => v.hp > 0);
+    }
   }
 
   effectiveRadius(player: SimPlayer): number {
@@ -445,7 +600,8 @@ export class MatchSim {
   useConsumable(playerId: number, consumable: ConsumableId): boolean {
     const player = this.players.find((p) => p.id === playerId);
     if (!player || !player.alive || this.phase !== 'play') return false;
-    const healMult = CHARACTERS[player.characterId].passives.healMult;
+    const pet = player.petId ? petEffective(player.petId, player.petLevel) : null;
+    const healMult = CHARACTERS[player.characterId].passives.healMult * (pet?.healMult ?? 1);
     if (consumable === 'botiquin') {
       if (player.inventory.botiquines <= 0 || player.hp >= MAX_HP) return false;
       player.inventory.botiquines -= 1;
@@ -507,7 +663,8 @@ export class MatchSim {
         return true;
       }
       case 'ammo': {
-        inv.ammo += item.amount ?? 24;
+        const pet = player.petId ? petEffective(player.petId, player.petLevel) : null;
+        inv.ammo += (item.amount ?? 24) + (pet?.ammoBonus ?? 0);
         return true;
       }
       case 'shieldcore': {
@@ -638,7 +795,10 @@ export class MatchSim {
     player.lastFireMs = nowMs;
     player.firing = true;
     const passives = CHARACTERS[player.characterId].passives;
-    const mult = RARITY_DAMAGE_MULT[weapon.rarity] * (this.isAbilityActive(player, 'sobrecarga') ? 1.3 : 1);
+    const mult =
+      RARITY_DAMAGE_MULT[weapon.rarity] *
+      (this.isAbilityActive(player, 'sobrecarga') ? 1.3 : 1) *
+      (this.mode.damageMult ?? 1);
     for (let i = 0; i < def.pellets; i++) {
       const spread = (this.rng.next() - 0.5) * 2 * def.spreadRad;
       const angle = player.aim + spread;
@@ -726,7 +886,15 @@ export class MatchSim {
 
   private movePlayer(player: SimPlayer, dtMs: number): void {
     if (!player.alive || player.landing) return;
+    const vehicle = this.drivingVehicle(player);
+    if (vehicle) {
+      player.x = vehicle.x;
+      player.y = vehicle.y;
+      player.aim = vehicle.aim;
+      return;
+    }
     const passives = CHARACTERS[player.characterId].passives;
+    const pet = player.petId ? petEffective(player.petId, player.petLevel) : null;
     const moving = player.input.mx !== 0 || player.input.my !== 0;
     player.prone = player.input.prone === true;
     if (player.input.slide === true && moving && this.timeMs >= player.nextSlideMs && !player.prone) {
@@ -739,6 +907,7 @@ export class MatchSim {
     const speed =
       PLAYER_SPEED *
       passives.speedMult *
+      (pet?.speedMult ?? 1) *
       (this.isAbilityActive(player, 'sprint') ? 1.55 : 1) *
       stanceMult *
       (TICK_MS / 1000) *
@@ -793,6 +962,17 @@ export class MatchSim {
           if (this.segmentHitsPlayer(b.x, b.y, nx, ny, p.x, p.y, this.effectiveRadius(p))) {
             const killer = this.players.find((k) => k.id === b.ownerId) ?? null;
             this.applyDamage(p, b.damage, killer);
+            hit = true;
+            break;
+          }
+        }
+      }
+
+      if (!hit) {
+        for (const v of this.vehicles) {
+          if (v.hp <= 0) continue;
+          if (this.segmentHitsPlayer(b.x, b.y, nx, ny, v.x, v.y, 26)) {
+            v.hp -= b.damage;
             hit = true;
             break;
           }
@@ -920,6 +1100,7 @@ export class MatchSim {
 
       this.stepBullets(dtMs);
       this.stepGrenades(dtMs);
+      this.stepVehicles(dtMs);
 
       this.airdropTimerMs -= dtMs;
       if (this.airdropTimerMs <= 0) {

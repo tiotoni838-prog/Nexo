@@ -4,7 +4,7 @@ Battle Royale original, competitivo y accesible. Este repositorio contiene la
 **especificación de ingeniería** (`NEXO_FRONTIER_MEGA_SPEC.part*`, 100.000 fichas de
 trabajo) y el **vertical slice jugable** en `game/`.
 
-## Qué hay implementado (v1.4.0, verificado)
+## Qué hay implementado (v1.5.0, verificado)
 
 - **Simulación autoritativa compartida** (`game/src/shared/`): movimiento con colisiones,
   **12 armas** con rarezas y daño inspirado en balística real (incluido **lanzacohetes
@@ -57,23 +57,23 @@ trabajo) y el **vertical slice jugable** en `game/`.
   (`ADMIN_TOKEN`) que consulta la API de transacciones de PayPal y muestra total USD,
   número de operaciones y desglose por artículo. Endpoint JSON: `/api/admin/earnings?days=N`.
 
-## Descargar y jugar (v1.4.0)
+## Descargar y jugar (v1.5.0)
 
 En la carpeta [`releases/`](releases/) del repo (o en `/download` del servidor de juego,
 con botones por plataforma):
 
-- **[NexoFPS-1.4.0-windows-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-windows-x64.zip)** —
+- **[NexoFPS-1.5.0-windows-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.5.0-windows-x64.zip)** —
   **aplicación nativa de Windows** (Electron 33): descomprime y ejecuta `nexo-fps.exe`.
-- **[NexoFPS-1.4.0-linux-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-linux-x64.zip)** —
+- **[NexoFPS-1.5.0-linux-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.5.0-linux-x64.zip)** —
   **aplicación nativa de Linux**: descomprime y ejecuta `./nexo-fps`.
-- **NexoFPS-1.4.0-macos** — se genera con `cd game && npm run desktop`
+- **NexoFPS-1.5.0-macos** — se genera con `cd game && npm run desktop`
   (`dist-desktop/NexoFPS-darwin-x64` y `-arm64`); no se aloja en Git por superar los
   100 MB por archivo de GitHub.
-- **[NexoFPS-1.4.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-web-standalone.zip)** —
+- **[NexoFPS-1.5.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.5.0-web-standalone.zip)** —
   el juego completo en UN archivo HTML. Descomprime, abre `NexoFPS.html` con doble clic
   y juega contra bots sin internet. Windows / macOS / Linux. También funciona en el
   navegador del **teléfono** (controles táctiles + pantalla completa).
-- **[NexoFPS-1.4.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-servidor.zip)** —
+- **[NexoFPS-1.5.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.5.0-servidor.zip)** —
   servidor dedicado (Node.js 20+) con tienda PayPal y panel de ganancias.
 
 Android (APK) e iOS: el proyecto WebView nativo se empaqueta con Android Studio /
@@ -81,6 +81,25 @@ Xcode — instrucciones en `docs/OPERATIONS.md` (no se alojan binarios sin build
 verificada de esos IDE).
 
 Para anunciar el juego en **Discord**: guía y embed listos en [`discord/DISCORD.md`](discord/DISCORD.md).
+
+### Vehículos, mascotas y modos (v1.5.0)
+- **5 vehículos conducibles** (`game/src/shared/vehicles.ts`): moto, buggy,
+  todoterreno, blindado y bote — cada uno con velocidad, vida, asientos, radio de
+  ruido y daño de atropello propio. Entra/sale con **E**; atropellas según la
+  velocidad (escala 0.35–1.0) y el vehículo **explota** al llegar a 0 de vida
+  (daño en área + eyección del conductor con daño). Los botes cruzan el agua.
+- **6 mascotas con bonos pequeños** (`game/src/shared/pets.ts`): cachorro, gato,
+  zorro, robot, halcón y dragón — bonos pasivos de curación, velocidad, radio de
+  loot y munición extra (+8 % por nivel, hasta nivel 30). Se compran con **NX**
+  (nunca ventaja de pago: bonos pequeños y equivalentes jugando).
+- **4 modos nuevos** (`game/src/shared/gameModes.ts`, 14 en total): **Mini BR**
+  (zona 3× más rápida), **Solo Francotiradores**, **Armas Gigantes** (daño ×2) y
+  **Noche** (oscuridad forzada).
+- **Pity en la ruleta** (`game/src/shared/roulette.ts`): épico garantizado a los
+  10 giros y legendario a los 50, con **contadores visibles** en la pestaña
+  Ruleta y aviso "(garantizado)" en el premio — transparencia total.
+- **Biblia del juego**: [`docs/BIBLIA-DEL-JUEGO.md`](docs/BIBLIA-DEL-JUEGO.md) —
+  documento maestro con las 12 áreas del juego, estado de cada una y hoja de ruta.
 
 ### Descargas por plataforma y avisos al dueño (v1.4.0)
 - **Página propia por plataforma**: `/download/windows`, `/download/linux`,
@@ -173,6 +192,7 @@ partida** (tu dispositivo hace de servidor P2P) o **Unirse** (WebSocket o P2P).
 - [docs/SECURITY.md](docs/SECURITY.md) — seguridad, privacidad, secretos, PayPal.
 - [docs/OPERATIONS.md](docs/OPERATIONS.md) — operación, límites y limitaciones honestas.
 - [docs/TAREAS-DUENO.md](docs/TAREAS-DUENO.md) — credenciales y tareas pendientes del propietario.
+- [docs/BIBLIA-DEL-JUEGO.md](docs/BIBLIA-DEL-JUEGO.md) — documento maestro del juego (12 áreas).
 - [docs/ROADMAP.md](docs/ROADMAP.md) — fases siguientes según la spec maestra.
 
 ## Estado honesto

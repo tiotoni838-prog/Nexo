@@ -102,7 +102,7 @@ export class Renderer {
     const snap = state.snapshot;
     ctx.filter = canvasFilter(this.brightness, this.filter);
     const tod = timeOfDay(this.timeMs);
-    this.currentDarkness = tod.darkness;
+    this.currentDarkness = snap?.night ? Math.max(tod.darkness, 0.45) : tod.darkness;
     ctx.fillStyle = state.map?.palette.sky ?? tod.sky;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (!snap || !state.map) return;
@@ -141,6 +141,7 @@ export class Renderer {
     this.drawRedZone(snap, camX, camY, zoom);
     this.drawMap(state.map, camX, camY, zoom);
     this.drawWalls(snap, camX, camY, zoom);
+    this.drawVehicles(snap, camX, camY, zoom);
     this.drawShadows(state.map, snap, camX, camY, zoom);
     this.drawItems(snap, camX, camY, zoom);
     this.drawGrenades(snap, camX, camY, zoom);
@@ -335,6 +336,42 @@ export class Renderer {
       ctx.strokeStyle = 'rgba(142, 160, 192, 0.35)';
       ctx.lineWidth = 1;
       ctx.strokeRect(sx, sy, o.w * zoom, o.h * zoom);
+    }
+  }
+
+  private drawVehicles(snap: SnapshotMsg, camX: number, camY: number, zoom: number): void {
+    if (!snap.vehicles) return;
+    const { ctx, canvas } = this;
+    const colors: Record<string, string> = {
+      moto: '#e05a3a',
+      buggy: '#d8a03a',
+      todoterreno: '#4a8a4a',
+      blindado: '#5a6a7a',
+      bote: '#3a7ad0',
+    };
+    for (const v of snap.vehicles) {
+      const x = (v.x - camX) * zoom + canvas.width / 2;
+      const y = (v.y - camY) * zoom + canvas.height / 2;
+      const size = (v.kind === 'moto' ? 34 : v.kind === 'blindado' ? 58 : 46) * zoom;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(v.aim);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(-size / 2 + 3, -size / 3 + 4, size, size * 0.66);
+      ctx.fillStyle = colors[v.kind] ?? '#888';
+      ctx.fillRect(-size / 2, -size / 3, size, size * 0.66);
+      ctx.fillStyle = 'rgba(10,16,30,0.55)';
+      ctx.fillRect(-size * 0.18, -size / 4, size * 0.34, size * 0.5);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillRect(size / 2 - 3, -size / 5, 3, size * 0.4);
+      if (v.hp < v.maxHp) {
+        ctx.rotate(-v.aim);
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(-size / 2, -size / 2 - 9, size, 5);
+        ctx.fillStyle = v.hp / v.maxHp > 0.5 ? '#4caf50' : v.hp / v.maxHp > 0.25 ? '#f2b632' : '#ff4d5e';
+        ctx.fillRect(-size / 2, -size / 2 - 9, (size * v.hp) / v.maxHp, 5);
+      }
+      ctx.restore();
     }
   }
 

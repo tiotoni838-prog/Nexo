@@ -276,10 +276,10 @@ describe('economía extendida', () => {
 });
 
 describe('modos de juego', () => {
-  it('define 10 modos con 4 implementados que cambian la simulación', () => {
-    expect(GAME_MODE_IDS).toHaveLength(10);
+  it('define 14 modos con 8 implementados que cambian la simulación', () => {
+    expect(GAME_MODE_IDS).toHaveLength(14);
     const implemented = GAME_MODE_IDS.filter((id) => GAME_MODES[id].implemented);
-    expect(implemented).toEqual(expect.arrayContaining(['solo', 'clasificatorio', 'rapido', 'solo-pistolas']));
+    expect(implemented).toEqual(expect.arrayContaining(['solo', 'clasificatorio', 'rapido', 'solo-pistolas', 'mini', 'francotiradores', 'armas-gigantes', 'noche']));
   });
 
   it('solo pistolas: el saqueo se restringe a pistolas y revólver', () => {

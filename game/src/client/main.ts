@@ -24,6 +24,7 @@ import { GAME_VERSION } from '../shared/version.js';
 import {
   initMetaPanels,
   processPurchaseReturn,
+  equippedPetId,
   grantMatchRewards,
   addNx,
   getNx,
@@ -117,7 +118,7 @@ const ensureNet = (transport: Transport): ClientNet => {
     onWelcome: (msg: WelcomeMsg) => {
       yourId = msg.yourId;
       gameMap = msg.map;
-      transport.send({ t: 'hello', protocol: 2, name: playerName(), lang: settings.lang, characterId: selectedCharacter });
+      transport.send({ t: 'hello', protocol: 2, name: playerName(), lang: settings.lang, characterId: selectedCharacter, petId: equippedPetId() });
     },
     onSnapshot: (msg: SnapshotMsg) => {
       for (const p of msg.players) {
@@ -490,6 +491,7 @@ window.addEventListener('keydown', (ev) => {
   if (ev.code === keyFor('swap')) net?.sendAction({ t: 'action', kind: 'swap', slot: latestSnapshot?.you ? 1 - latestSnapshot.you.activeSlot : 0 });
   if (ev.code === keyFor('grenade')) net?.sendAction({ t: 'action', kind: 'throwGrenade' });
   if (ev.code === keyFor('ability')) net?.sendAction({ t: 'action', kind: 'ability' });
+  if (ev.code === 'KeyE') net?.sendAction({ t: 'action', kind: 'enterVehicle' });
   if (ev.code === keyFor('slide')) slideQueued = true;
   if (ev.code === keyFor('reload')) sfx.reload();
 });
