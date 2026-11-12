@@ -7,6 +7,8 @@ import { loadSettings, saveSettings, applySettingsToDom, applyI18n, keyLabel, ty
 import { t } from '../shared/i18n.js';
 import { WEAPONS } from '../shared/weapons.js';
 import { CHARACTERS, CHARACTER_IDS, type CharacterId } from '../shared/characters.js';
+import { GAME_VERSION } from '../shared/version.js';
+import { computeMatchNxEarned } from '../paypal/store.js';
 import type { ClientMsg, ServerMsg, SnapshotMsg, WelcomeMsg } from '../shared/protocol.js';
 
 type Mode = 'menu' | 'solo' | 'ws' | 'p2p-host' | 'p2p-guest';
@@ -32,6 +34,40 @@ let slideQueued = false;
 let proneToggle = false;
 let selectedCharacter: CharacterId = 'aurora';
 let killFeedTimers: number[] = [];
+
+const NX_KEY = 'nexo_nx_balance';
+const getNxBalance = (): number => {
+  const raw = localStorage.getItem(NX_KEY);
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+};
+const addNx = (amount: number): number => {
+  const next = Math.max(0, getNxBalance() + Math.floor(amount));
+  localStorage.setItem(NX_KEY, String(next));
+  return next;
+};
+const refreshNxBalanceUi = (): void => {
+  $('nxBalance').textContent = `◆ ${getNxBalance()} NX`;
+};
+refreshNxBalanceUi();
+
+const checkForUpdates = async (): Promise<void> => {
+  try {
+    const res = await fetch('/api/version');
+    if (!res.ok) return;
+    const data = (await res.json()) as { version: string };
+    if (data.version !== GAME_VERSION) {
+      $('updateText').textContent = `Nueva versión disponible: ${data.version} (tienes ${GAME_VERSION})`;
+      $('updateBanner').classList.remove('hidden');
+    }
+  } catch {
+    /* sin servidor: nada que comprobar */
+  }
+};
+$('btnUpdate').addEventListener('click', () => {
+  location.reload();
+});
+void checkForUpdates();
 
 const renderer = new Renderer($('canvas') as HTMLCanvasElement);
 const sfx = new Sfx();
@@ -112,6 +148,7 @@ const routeServerMsg = (msg: ServerMsg): void => {
   if (msg.t === 'welcome') {
     yourId = msg.yourId;
     gameMap = msg.map;
+    $('mapName').textContent = msg.map?.nameEs ?? '';
   } else if (msg.t === 'snapshot') {
     latestSnapshot = msg;
     updateHud(msg);
@@ -266,10 +303,14 @@ const handleServerMsg = (msg: ServerMsg): void => {
       const won = msg.placement === 1;
       if (won) sfx.victory();
       else sfx.defeat();
+      const nxEarned = computeMatchNxEarned(msg.kills, msg.placement, msg.totalPlayers);
+      const nxTotal = addNx(nxEarned);
+      refreshNxBalanceUi();
       panel.innerHTML = `
         <h2>${won ? t('victory', settings.lang) : t('defeat', settings.lang)}</h2>
         <p>${t('placement', settings.lang)}: ${msg.placement} / ${msg.totalPlayers}</p>
         <p>${t('kills', settings.lang)}: ${msg.kills}</p>
+        <p class="nx-balance">◆ +${nxEarned} NX · Total: ${nxTotal} NX</p>
         <p>🏆 ${msg.winnerName}</p>
         <button class="btn" id="btnBackMenu">${t('backToMenu', settings.lang)}</button>`;
       panel.classList.remove('hidden');

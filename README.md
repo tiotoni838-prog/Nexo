@@ -1,15 +1,31 @@
-# NEXO: FRONTIER
+# Nexo FPS
 
 Battle Royale original, competitivo y accesible. Este repositorio contiene la
 **especificación de ingeniería** (`NEXO_FRONTIER_MEGA_SPEC.part*`, 100.000 fichas de
 trabajo) y el **vertical slice jugable** en `game/`.
 
-## Qué hay implementado (vertical slice v0.1, verificado)
+## Qué hay implementado (v1.0.0, verificado)
 
 - **Simulación autoritativa compartida** (`game/src/shared/`): movimiento con colisiones,
-  6 armas originales con rarezas, granadas con daño por área, airdrops legendarios, loot,
+  **12 armas** con rarezas y daño inspirado en balística real (incluido **lanzacohetes
+  explosivo** con daño por área), granadas, airdrops legendarios, loot,
   inventario, zona dinámica en 5 fases con daño creciente, victoria último-en-pie,
   espectador clicable y resultados.
+- **3 mapas** (`game/src/shared/map.ts`): Nexo Urbano, Desierto Solar y Volcán Ceniza,
+  cada uno con 8 puntos de interés propios, densidad de cobertura y paleta visual
+  distinta. Selección con `NEXO_MAP=<id>` en el servidor; el cliente muestra el nombre
+  del mapa y renderiza con su paleta.
+- **Anti-hacker server-side** (`game/src/shared/antiCheat.ts`): detección de speedhack,
+  teletransporte ilegal y posición fuera del mundo con strikes, expulsión automática y
+  decaimiento; el cliente nunca decide daño, inventario ni resultados.
+- **Doble moneda**: **NX** se gana jugando (kills + posición final, `computeMatchNxEarned`)
+  y **USD** es la moneda de pago. La tienda tiene artículos de ambas monedas, todos
+  cosméticos (sin pay-to-win).
+- **Sistema de actualizaciones** (`game/src/shared/version.ts` + `/api/version`): el
+  cliente compara su versión con la del servidor y muestra un banner "Actualizar" que
+  recarga con la nueva build.
+- **Logo y branding** (`game/client/logo.svg`): logo SVG original con degradado Nexo,
+  favicon y menú con fondo animado.
 - **Servidor de partida autoritativo** (`game/src/server/`): tick 30 Hz, snapshots 15 Hz,
   validación de mensajes, límites anti-abuso, versionado de protocolo, bots de
   entrenamiento, endpoint `/health`. El cliente nunca decide daño, inventario ni resultados.
@@ -32,10 +48,14 @@ trabajo) y el **vertical slice jugable** en `game/`.
 - **Proyecto Godot 4.3 real** (`godot/`): cliente 3D con personajes humanoides con
   cuerpo completo, mapa con edificios y árboles, zona dinámica y lógica pura
   determinista portada a GDScript, verificada headless (29/29 checks).
-- **Tienda PayPal solo server-side** (`game/src/paypal/`): catálogo 100% cosmético,
+- **Tienda PayPal activa solo server-side** (`game/src/paypal/`): catálogo 100% cosmético,
   OAuth client-credentials, create/capture order con idempotencia. Las credenciales se
   leen de variables de entorno (`PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`) — nunca en
-  código, cliente, APK ni Git.
+  código, cliente, APK ni Git. Copia `game/.env.example` a `game/.env` y rellénalo; el
+  servidor lo carga al arrancar.
+- **Panel de ganancias del propietario** (`/admin`): página protegida por token
+  (`ADMIN_TOKEN`) que consulta la API de transacciones de PayPal y muestra total USD,
+  número de operaciones y desglose por artículo. Endpoint JSON: `/api/admin/earnings?days=N`.
 
 ## Ejecutar
 

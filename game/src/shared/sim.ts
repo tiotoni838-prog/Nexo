@@ -17,6 +17,7 @@ import {
   segmentHitsRect,
   type GameMap,
   type Rect,
+  type MapPresetId,
 } from './map.js';
 import {
   emptyInventory,
@@ -26,6 +27,8 @@ import {
   type Inventory,
 } from './loot.js';
 import {
+  EXPLOSION_DAMAGE,
+  EXPLOSION_RADIUS,
   GRENADE_DAMAGE,
   GRENADE_FUSE_MS,
   GRENADE_RADIUS,
@@ -114,6 +117,7 @@ export interface Bullet {
   damage: number;
   traveled: number;
   range: number;
+  explosive?: boolean;
 }
 
 export interface Grenade {
@@ -144,6 +148,7 @@ export interface MatchConfig {
   seed: number;
   botCount: number;
   dropPhaseMs: number;
+  mapId?: MapPresetId;
 }
 
 const BOT_NAMES_ES = [
@@ -212,7 +217,7 @@ export class MatchSim {
   constructor(config: MatchConfig) {
     this.seed = config.seed;
     this.rng = new Rng(config.seed ^ 0x5f3759df);
-    this.map = generateMap(config.seed);
+    this.map = generateMap(config.seed, config.mapId ?? 'nexo-urbano');
     this.zone = initialZone(this.rng);
     this.dropEndsAtMs = config.dropPhaseMs;
     resetItemIds();
@@ -535,14 +540,29 @@ export class MatchSim {
   }
 
   private explodeGrenade(g: Grenade): void {
-    this.events.push({ kind: 'explosion', x: g.x, y: g.y, playerId: g.ownerId });
+    this.explodeAt(g.x, g.y, g.ownerId, GRENADE_DAMAGE, GRENADE_RADIUS);
+  }
+
+  private explodeAt(
+    x: number,
+    y: number,
+    ownerId: number,
+    damage: number,
+    radius: number,
+  ): void {
+    this.events.push({ kind: 'explosion', x, y, playerId: ownerId });
     for (const p of this.players) {
       if (!p.alive || p.landing) continue;
-      const d = dist(p, g);
-      if (d > GRENADE_RADIUS) continue;
-      const falloff = 1 - d / GRENADE_RADIUS;
-      const killer = this.players.find((k) => k.id === g.ownerId) ?? null;
-      this.applyDamage(p, GRENADE_DAMAGE * falloff, killer);
+      const d = dist(p, { x, y });
+      if (d > radius) continue;
+      const falloff = 1 - d / radius;
+      const killer = this.players.find((k) => k.id === ownerId) ?? null;
+      this.applyDamage(p, damage * falloff, killer);
+    }
+    for (const wall of this.walls) {
+      const cx = wall.x + wall.w / 2;
+      const cy = wall.y + wall.h / 2;
+      if (dist({ x: cx, y: cy }, { x, y }) <= radius) this.damageWall(wall, damage);
     }
   }
 
@@ -617,6 +637,7 @@ export class MatchSim {
         damage: def.damage * mult,
         traveled: 0,
         range: def.range * passives.rangeMult,
+        explosive: def.explosive === true,
       });
     }
     this.events.push({ kind: 'shot', playerId: player.id, x: player.x, y: player.y, weaponId: weapon.weaponId });
@@ -755,6 +776,10 @@ export class MatchSim {
             break;
           }
         }
+      }
+
+      if (hit && b.explosive) {
+        this.explodeAt(b.x, b.y, b.ownerId, EXPLOSION_DAMAGE, EXPLOSION_RADIUS);
       }
 
       b.traveled += stepLen;

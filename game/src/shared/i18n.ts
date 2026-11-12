@@ -54,6 +54,7 @@ export const STRINGS: Dict = {
   defeat: { es: 'Eliminado', en: 'Eliminated' },
   placement: { es: 'Puesto', en: 'Placement' },
   backToMenu: { es: 'Volver al menú', en: 'Back to menu' },
+  update: { es: 'Actualizar', en: 'Update' },
   spectator: { es: 'Modo espectador', en: 'Spectator mode' },
   killFeed: { es: 'Registro de bajas', en: 'Kill feed' },
   zoneShrinking: { es: '¡La zona se está cerrando!', en: 'The zone is closing!' },

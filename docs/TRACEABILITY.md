@@ -37,6 +37,15 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 | Personajes con cuerpo, no "pastillas" (petición explícita) | `client/render.ts` `drawHumanoid` (torso, cabeza, brazos, piernas, arma, ciclo de caminata) + alas cosméticas | manual (visual) | — |
 | Motor Godot 4 (fase 3-6 de ROADMAP) | `godot/` proyecto completo 4.3: lógica pura GDScript + escena 3D con humanoides | `godot/tests/logic_tests.gd` 29/29 ✓ headless (Godot 4.3 stable `77dcf97d8`) | `godot/README.md` |
 
+| Arsenal extendido de 12 armas con daño inspirado en balística real (petición: "todas las armas") | `shared/weapons.ts` (revólver, SMG compacto, fusil de batalla, escopeta doble, precisión, lanzacohetes explosivo) | `test/content.test.ts` (12 armas, explosivo único) | `npm test` 66/66 ✓ |
+| Balas explosivas con daño por área (lanzacohetes) | `sim.explodeAt` (reutiliza explosión de granadas, daña muros) | `test/content.test.ts` + `test/sim.test.ts` | ídem |
+| 3 mapas con POI y paleta propias (petición: "muchos mapas") | `shared/map.ts` MAP_PRESETS (Nexo Urbano, Desierto Solar, Volcán Ceniza), `NEXO_MAP` en servidor, paleta en cliente | `test/content.test.ts` (determinismo y diferencia entre presets) | ídem |
+| Anti-hacker potente server-side (petición explícita) | `shared/antiCheat.ts` (speedhack, teleport, out-of-world, strikes con decaimiento), `gameServer.runAntiCheat` por tick | `test/antiCheat.test.ts` (8 tests) | ídem |
+| Doble moneda: NX ganada jugando + USD de pago | `paypal/store.ts` (catálogo USD+NX, `computeMatchNxEarned`), saldo NX en cliente (localStorage) | `test/paypal.test.ts` (doble moneda, recompensas) | ídem |
+| Panel de ganancias del propietario | `paypal/earnings.ts` (API transacciones PayPal), `paypal/adminRoutes.ts` (`/admin`, `/api/admin/earnings`, token ADMIN_TOKEN) | `test/earnings.test.ts` (3 tests) + smoke live (saldo real) | ídem |
+| Sistema de actualizaciones en el cliente | `shared/version.ts`, `/api/version`, banner "Actualizar" en menú | `test/content.test.ts` (versión semántica) | ídem |
+| Logo y branding Nexo FPS | `client/logo.svg` (SVG original), favicon, menú con fondo animado | manual (visual) | — |
+
 ## Bloqueos registrados
 
 1. **Builds nativos (APK/AAB, instaladores)**: sin toolchain Android/iOS/Electron en el
@@ -45,6 +54,6 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 2. **Prueba E2E P2P entre dispositivos**: requiere dos navegadores reales; el código
    WebRTC está implementado y tipado, pendiente de verificación manual con el procedimiento
    de OPERATIONS.md.
-3. **Credenciales PayPal**: el propietario debe configurarlas como variables de entorno
-   del servidor (nunca en el chat ni en Git); la tienda responde 503 con instrucciones
-   hasta entonces.
+3. **Credenciales PayPal**: configuradas por el propietario en `game/.env` (gitignored,
+   fuera de Git). Verificadas contra la API live: OAuth y transacciones responden
+   correctamente (ver smoke de TRACEABILITY).

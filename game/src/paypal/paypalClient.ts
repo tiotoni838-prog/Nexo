@@ -51,7 +51,7 @@ export class PayPalClient {
 
   constructor(private readonly config: PayPalConfig, private readonly fetchFn: typeof fetch = fetch) {}
 
-  private async getAccessToken(nowMs: number): Promise<string> {
+  async getAccessToken(nowMs = Date.now()): Promise<string> {
     if (this.tokenCache && this.tokenCache.expiresAtMs - 60_000 > nowMs) {
       return this.tokenCache.token;
     }

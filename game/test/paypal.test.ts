@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { PayPalClient, PayPalConfigError, loadPayPalConfig } from '../src/paypal/paypalClient.js';
 import { StoreService } from '../src/paypal/storeRoutes.js';
-import { STORE_CATALOG, findStoreItem } from '../src/paypal/store.js';
+import { STORE_CATALOG, findStoreItem, computeMatchNxEarned } from '../src/paypal/store.js';
 
 describe('carga de configuración PayPal', () => {
   it('falla con mensaje claro si faltan secretos en el entorno', () => {
@@ -107,10 +107,28 @@ describe('PayPalClient', () => {
 describe('StoreService', () => {
   it('la tienda solo vende cosméticos con precio visible', () => {
     for (const item of STORE_CATALOG) {
-      expect(['skin', 'emote', 'trail']).toContain(item.kind);
-      expect(item.priceUsd).toMatch(/^\d+\.\d{2}$/);
+      expect(['skin', 'emote', 'trail', 'banner']).toContain(item.kind);
       expect(findStoreItem(item.sku)).toBeDefined();
+      if (item.currency === 'USD') {
+        expect(item.priceUsd).toMatch(/^\d+\.\d{2}$/);
+      } else {
+        expect(item.priceNx).toBeGreaterThan(0);
+      }
     }
+  });
+
+  it('doble moneda: hay artículos de pago (USD) y ganados jugando (NX)', () => {
+    expect(STORE_CATALOG.some((i) => i.currency === 'USD')).toBe(true);
+    expect(STORE_CATALOG.some((i) => i.currency === 'NX')).toBe(true);
+  });
+
+  it('la recompensa NX por partida crece con kills y buena posición', () => {
+    const base = computeMatchNxEarned(0, 10, 10);
+    const withKills = computeMatchNxEarned(5, 3, 10);
+    const victory = computeMatchNxEarned(8, 1, 10);
+    expect(base).toBeGreaterThan(0);
+    expect(withKills).toBeGreaterThan(base);
+    expect(victory).toBeGreaterThan(withKills);
   });
 
   it('queda desactivada sin credenciales y responde el motivo sin secretos', () => {

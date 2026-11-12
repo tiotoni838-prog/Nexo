@@ -62,7 +62,7 @@ export class Renderer {
   render(state: RenderState): void {
     const { ctx, canvas } = this;
     const snap = state.snapshot;
-    ctx.fillStyle = '#0a0e17';
+    ctx.fillStyle = state.map?.palette.sky ?? '#0a0e17';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (!snap || !state.map) return;
 
@@ -256,9 +256,13 @@ export class Renderer {
 
   private drawMap(map: GameMap, camX: number, camY: number, zoom: number): void {
     const { ctx } = this;
+    const palette = map.palette ?? {
+      obstacle: '#26314e',
+      obstacleTop: '#1c2740',
+    };
     for (const o of map.obstacles) {
       const [sx, sy] = this.worldToScreen(camX, camY, zoom, o.x, o.y);
-      ctx.fillStyle = o.w > 40 ? '#26314e' : '#1c2740';
+      ctx.fillStyle = o.w > 40 ? palette.obstacle : palette.obstacleTop;
       ctx.fillRect(sx, sy, o.w * zoom, o.h * zoom);
       ctx.strokeStyle = 'rgba(142, 160, 192, 0.35)';
       ctx.lineWidth = 1;

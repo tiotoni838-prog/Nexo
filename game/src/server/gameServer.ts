@@ -7,6 +7,9 @@ import {
   validateClientMsg,
   sanitizeName,
 } from '../shared/validation.js';
+import { AntiCheatMonitor } from '../shared/antiCheat.js';
+import type { MapPresetId } from '../shared/map.js';
+import { WORLD_RADIUS } from '../shared/constants.js';
 import { itemLabelEs } from '../shared/loot.js';
 import type {
   ClientMsg,
@@ -28,6 +31,7 @@ export interface GameServerOptions {
   mode?: 'solo-bots' | 'online';
   minPlayersToStart?: number;
   autoStartLobbyMs?: number;
+  mapId?: MapPresetId;
   onTick?: (sim: MatchSim) => void;
 }
 
@@ -101,8 +105,12 @@ export class GameServer {
       seed,
       botCount: options.botCount ?? 0,
       dropPhaseMs: 8000,
+      mapId: options.mapId,
     });
+    this.antiCheat = new AntiCheatMonitor();
   }
+
+  readonly antiCheat: AntiCheatMonitor;
 
   addConnection(connection: Connection): void {
     if (this.clients.size >= MAX_PLAYERS) {
@@ -258,6 +266,7 @@ export class GameServer {
       this.accumulatorMs -= TICK_MS;
       steps += 1;
       this.simulateTick();
+      this.runAntiCheat();
     }
 
     this.snapshotAccumulatorMs += dtMs;
@@ -272,6 +281,35 @@ export class GameServer {
     }
 
     this.onTick?.(this.sim);
+  }
+
+  private runAntiCheat(): void {
+    const nowMs = this.sim.timeMs;
+    for (const client of this.clients.values()) {
+      if (!client.joined || client.playerId < 0) continue;
+      const player = this.sim.players.find((p) => p.id === client.playerId);
+      if (!player || !player.alive) continue;
+      const verdict = this.antiCheat.validateMovement(
+        player.id,
+        player.x,
+        player.y,
+        nowMs,
+        WORLD_RADIUS,
+      );
+      if (!verdict.ok && this.antiCheat.shouldKick(player.id)) {
+        client.connection.send({
+          t: 'error',
+          code: 'anti-cheat-kick',
+          msg: `Movimiento ilegal detectado (${verdict.reason}). Has sido expulsado.`,
+        });
+        this.sim.players = this.sim.players.filter((p) => p.id !== player.id);
+        client.joined = false;
+        client.playerId = -1;
+        this.antiCheat.forget(player.id);
+        client.connection.close();
+      }
+    }
+    this.antiCheat.decay(nowMs);
   }
 
   private simulateTick(): void {

@@ -1,6 +1,18 @@
 import type { Rarity } from './constants.js';
 
-export type WeaponId = 'pistola' | 'subfusil' | 'fusil' | 'escopeta' | 'francotirador' | 'ametralladora';
+export type WeaponId =
+  | 'pistola'
+  | 'revolver'
+  | 'subfusil'
+  | 'subfusil-compacto'
+  | 'fusil'
+  | 'fusil-batalla'
+  | 'escopeta'
+  | 'escopeta-doble'
+  | 'francotirador'
+  | 'precision'
+  | 'ametralladora'
+  | 'lanzacohetes';
 
 export interface WeaponDef {
   id: WeaponId;
@@ -14,6 +26,7 @@ export interface WeaponDef {
   reloadMs: number;
   bulletSpeed: number;
   pellets: number;
+  explosive?: boolean;
 }
 
 export const WEAPONS: Record<WeaponId, WeaponDef> = {
@@ -95,7 +108,96 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
     bulletSpeed: 680,
     pellets: 1,
   },
+  // Arsenal extendido: 6 armas nuevas con daño inspirado en balística real
+  // (calibres .357, 9mm compacto, 7.62, calibre 12 doble, .338, cohete HE).
+  revolver: {
+    id: 'revolver',
+    nameEs: 'Revólver Magno',
+    nameEn: 'Magnum Revolver',
+    damage: 48,
+    fireIntervalMs: 600,
+    spreadRad: 0.03,
+    range: 500,
+    magSize: 6,
+    reloadMs: 2400,
+    bulletSpeed: 720,
+    pellets: 1,
+  },
+  'subfusil-compacto': {
+    id: 'subfusil-compacto',
+    nameEs: 'Subfusil Compacto Vector',
+    nameEn: 'Vector Compact SMG',
+    damage: 9,
+    fireIntervalMs: 70,
+    spreadRad: 0.13,
+    range: 320,
+    magSize: 25,
+    reloadMs: 1300,
+    bulletSpeed: 640,
+    pellets: 1,
+  },
+  'fusil-batalla': {
+    id: 'fusil-batalla',
+    nameEs: 'Fusil de Batalla Centinela',
+    nameEn: 'Sentinel Battle Rifle',
+    damage: 34,
+    fireIntervalMs: 320,
+    spreadRad: 0.035,
+    range: 640,
+    magSize: 20,
+    reloadMs: 2200,
+    bulletSpeed: 860,
+    pellets: 1,
+  },
+  'escopeta-doble': {
+    id: 'escopeta-doble',
+    nameEs: 'Escopeta Doble Cañón',
+    nameEn: 'Double-Barrel Shotgun',
+    damage: 12,
+    fireIntervalMs: 500,
+    spreadRad: 0.3,
+    range: 180,
+    magSize: 2,
+    reloadMs: 1600,
+    bulletSpeed: 540,
+    pellets: 8,
+  },
+  precision: {
+    id: 'precision',
+    nameEs: 'Fusil de Precisión Halcón',
+    nameEn: 'Falcon Marksman Rifle',
+    damage: 52,
+    fireIntervalMs: 800,
+    spreadRad: 0.015,
+    range: 780,
+    magSize: 10,
+    reloadMs: 2300,
+    bulletSpeed: 980,
+    pellets: 1,
+  },
+  lanzacohetes: {
+    id: 'lanzacohetes',
+    nameEs: 'Lanzacohetes Titán',
+    nameEn: 'Titan Rocket Launcher',
+    damage: 95,
+    fireIntervalMs: 2000,
+    spreadRad: 0.01,
+    range: 700,
+    magSize: 1,
+    reloadMs: 3400,
+    bulletSpeed: 480,
+    pellets: 1,
+    explosive: true,
+  },
 };
+
+export const WEAPON_IDS = Object.keys(WEAPONS) as WeaponId[];
+
+export const isWeaponId = (value: unknown): value is WeaponId =>
+  typeof value === 'string' && Object.prototype.hasOwnProperty.call(WEAPONS, value);
+
+export const EXPLOSION_RADIUS = 70;
+export const EXPLOSION_DAMAGE = 55;
 
 export const RARITY_DAMAGE_MULT: Record<Rarity, number> = {
   comun: 1,

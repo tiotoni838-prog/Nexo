@@ -3,15 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>NEXO: FRONTIER</title>
+  <title>Nexo FPS</title>
+  <link rel="icon" type="image/svg+xml" href="/client/logo.svg" />
   <link rel="stylesheet" href="/client/styles.css" />
 </head>
 <body>
   <div id="app">
     <!-- Menú principal -->
     <section id="menu" class="screen">
-      <h1 class="logo">NEXO<span>: FRONTIER</span></h1>
+      <img id="menuLogo" src="/client/logo.svg" alt="Nexo FPS" width="120" height="120" />
+      <h1 class="logo">NEXO<span> FPS</span></h1>
       <p id="subtitle" class="subtitle"></p>
+      <p id="nxBalance" class="nx-balance"></p>
+      <div id="updateBanner" class="update-banner hidden">
+        <span id="updateText"></span>
+        <button id="btnUpdate" class="btn small primary" data-i18n="update"></button>
+      </div>
       <div class="menu-card">
         <label for="playerName" data-i18n="name"></label>
         <input id="playerName" maxlength="16" value="Jugador" autocomplete="off" />
@@ -91,6 +98,7 @@
         <div id="topbar">
           <span id="aliveCount"></span>
           <span id="zoneTimer"></span>
+          <span id="mapName"></span>
           <span id="ping"></span>
         </div>
         <div id="killfeed"></div>

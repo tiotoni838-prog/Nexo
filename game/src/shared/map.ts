@@ -18,21 +18,103 @@ export interface Poi {
 
 export interface GameMap {
   size: number;
+  presetId: MapPresetId;
+  nameEs: string;
+  nameEn: string;
+  palette: MapPalette;
   pois: Poi[];
   obstacles: Rect[];
   lootSpawns: Vec2[];
 }
 
-const POI_NAMES: Array<[string, string]> = [
-  ['Puerto Nexo', 'Nexo Port'],
-  ['Torres Gemelas de Cuarzo', 'Quartz Twin Towers'],
-  ['Bosque de Antenas', 'Antenna Forest'],
-  ['Cráter Aurora', 'Aurora Crater'],
-  ['Mercado Flotante', 'Floating Market'],
-  ['Refinería del Sol', 'Sun Refinery'],
-  ['Jardines Colgantes', 'Hanging Gardens'],
-  ['Estación Cero', 'Zero Station'],
-];
+export interface MapPalette {
+  ground: string;
+  groundAlt: string;
+  obstacle: string;
+  obstacleTop: string;
+  sky: string;
+}
+
+export type MapPresetId = 'nexo-urbano' | 'desierto-solar' | 'volcan-ceniza';
+
+export const MAP_PRESETS: Record<
+  MapPresetId,
+  { nameEs: string; nameEn: string; palette: MapPalette; pois: Array<[string, string]>; obstacleCount: number }
+> = {
+  'nexo-urbano': {
+    nameEs: 'Nexo Urbano',
+    nameEn: 'Nexo Urban',
+    palette: {
+      ground: '#1b2430',
+      groundAlt: '#232f3d',
+      obstacle: '#3a4a5e',
+      obstacleTop: '#4d6178',
+      sky: '#0b111a',
+    },
+    pois: [
+      ['Puerto Nexo', 'Nexo Port'],
+      ['Torres Gemelas de Cuarzo', 'Quartz Twin Towers'],
+      ['Bosque de Antenas', 'Antenna Forest'],
+      ['Cráter Aurora', 'Aurora Crater'],
+      ['Mercado Flotante', 'Floating Market'],
+      ['Refinería del Sol', 'Sun Refinery'],
+      ['Jardines Colgantes', 'Hanging Gardens'],
+      ['Estación Cero', 'Zero Station'],
+    ],
+    obstacleCount: 90,
+  },
+  'desierto-solar': {
+    nameEs: 'Desierto Solar',
+    nameEn: 'Solar Desert',
+    palette: {
+      ground: '#8a6b3d',
+      groundAlt: '#9c7c48',
+      obstacle: '#6b5230',
+      obstacleTop: '#8a6b40',
+      sky: '#2a1f10',
+    },
+    pois: [
+      ['Cañón Rojo', 'Red Canyon'],
+      ['Pueblo Polvo', 'Dust Town'],
+      ['Ruinas del Sol', 'Sun Ruins'],
+      ['Pozo Seco', 'Dry Well'],
+      ['Dunas Doradas', 'Golden Dunes'],
+      ['Fuerte Calavera', 'Skull Fort'],
+      ['Oasis Espejo', 'Mirror Oasis'],
+      ['Mina Abandonada', 'Abandoned Mine'],
+    ],
+    obstacleCount: 120,
+  },
+  'volcan-ceniza': {
+    nameEs: 'Volcán Ceniza',
+    nameEn: 'Ash Volcano',
+    palette: {
+      ground: '#2b1d1d',
+      groundAlt: '#3a2626',
+      obstacle: '#4a3030',
+      obstacleTop: '#6b3f33',
+      sky: '#160b0b',
+    },
+    pois: [
+      ['Cráter Principal', 'Main Crater'],
+      ['Coladas de Lava', 'Lava Flows'],
+      ['Pueblo Ceniza', 'Ash Village'],
+      ['Grietas Rugientes', 'Roaring Fissures'],
+      ['Observatorio Umbral', 'Threshold Observatory'],
+      ['Campo de Obsidiana', 'Obsidian Field'],
+      ['Refugio Subterráneo', 'Underground Shelter'],
+      ['Pico Tormenta', 'Storm Peak'],
+    ],
+    obstacleCount: 60,
+  },
+};
+
+export const MAP_PRESET_IDS = Object.keys(MAP_PRESETS) as MapPresetId[];
+
+export const isMapPresetId = (value: unknown): value is MapPresetId =>
+  typeof value === 'string' && Object.prototype.hasOwnProperty.call(MAP_PRESETS, value);
+
+const POI_NAMES: Array<[string, string]> = MAP_PRESETS['nexo-urbano'].pois;
 
 const rectOverlapsAny = (r: Rect, rects: Rect[]): boolean =>
   rects.some(
@@ -40,8 +122,9 @@ const rectOverlapsAny = (r: Rect, rects: Rect[]): boolean =>
       r.x < o.x + o.w + 30 && r.x + r.w + 30 > o.x && r.y < o.y + o.h + 30 && r.y + r.h + 30 > o.y,
   );
 
-export const generateMap = (seed: number): GameMap => {
-  const rng = new Rng(seed);
+export const generateMap = (seed: number, presetId: MapPresetId = 'nexo-urbano'): GameMap => {
+  const preset = MAP_PRESETS[presetId];
+  const rng = new Rng(seed ^ hashPreset(presetId));
   const pois: Poi[] = [];
   const obstacles: Rect[] = [];
   const lootSpawns: Vec2[] = [];
@@ -80,7 +163,7 @@ export const generateMap = (seed: number): GameMap => {
       }
     }
 
-    pois.push({ nameEs: POI_NAMES[i]![0], nameEn: POI_NAMES[i]![1], center, radius, buildings });
+    pois.push({ nameEs: preset.pois[i]![0], nameEn: preset.pois[i]![1], center, radius, buildings });
     obstacles.push(...buildings);
 
     const spawnCount = rng.int(6, 10);
@@ -92,7 +175,7 @@ export const generateMap = (seed: number): GameMap => {
     }
   }
 
-  for (let t = 0; t < 90; t++) {
+  for (let t = 0; t < preset.obstacleCount; t++) {
     const size = 16 + rng.next() * 22;
     const rect: Rect = {
       x: rng.range(-WORLD_RADIUS + 40, WORLD_RADIUS - 40 - size),
@@ -106,7 +189,25 @@ export const generateMap = (seed: number): GameMap => {
     }
   }
 
-  return { size: MAP_SIZE, pois, obstacles, lootSpawns };
+  return {
+    size: MAP_SIZE,
+    presetId,
+    nameEs: preset.nameEs,
+    nameEn: preset.nameEn,
+    palette: preset.palette,
+    pois,
+    obstacles,
+    lootSpawns,
+  };
+};
+
+const hashPreset = (presetId: MapPresetId): number => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < presetId.length; i++) {
+    h ^= presetId.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h;
 };
 
 export const pointInRect = (px: number, py: number, r: Rect): boolean =>
