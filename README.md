@@ -69,10 +69,12 @@ con botones por plataforma):
 - **NexoFPS-1.6.0-macos** — se genera con `cd game && npm run desktop`
   (`dist-desktop/NexoFPS-darwin-x64` y `-arm64`); no se aloja en Git por superar los
   100 MB por archivo de GitHub.
+- **[NexoFPS-1.6.0-web.html](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-web.html)** —
+  **el juego en UN archivo HTML, sin ZIP**: descarga directa con un clic, ideal para el
+  **teléfono** (controles táctiles + pantalla completa) y para PC (doble clic y juega
+  contra bots sin internet). Windows / macOS / Linux / Android (navegador).
 - **[NexoFPS-1.6.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-web-standalone.zip)** —
-  el juego completo en UN archivo HTML. Descomprime, abre `NexoFPS.html` con doble clic
-  y juega contra bots sin internet. Windows / macOS / Linux. También funciona en el
-  navegador del **teléfono** (controles táctiles + pantalla completa).
+  el mismo juego en ZIP (alternativa si tu navegador renombra el HTML).
 - **[NexoFPS-1.6.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-servidor.zip)** —
   servidor dedicado (Node.js 20+) con tienda PayPal y panel de ganancias.
 

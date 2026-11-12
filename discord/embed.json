@@ -30,7 +30,7 @@
         },
         {
           "name": "📱 iOS / navegador del teléfono",
-          "value": "[NexoFPS-1.6.0-web-standalone.zip — un solo HTML con controles táctiles](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-web-standalone.zip). iOS: requiere Xcode/App Store (cuando se active la cuenta de desarrollador).",
+          "value": "[NexoFPS-1.6.0-web.html — descarga directa sin ZIP, un clic en el teléfono](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-web.html). Ábrelo con el navegador y pulsa pantalla completa. iOS: requiere Xcode/App Store (cuando se active la cuenta de desarrollador).",
           "inline": false
         },
         {

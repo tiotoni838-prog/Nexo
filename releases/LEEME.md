@@ -9,7 +9,9 @@
 - **macOS**: se genera localmente con `cd game && npm run desktop`
   (`game/dist-desktop/NexoFPS-darwin-x64` y `-arm64`). No se aloja en Git porque
   supera los 100 MB por archivo que permite GitHub.
-- **NexoFPS-1.6.0-web-standalone.zip** — el juego completo en un solo HTML.
+- **NexoFPS-1.6.0-web.html** — el juego en UN archivo HTML **sin ZIP**: descarga directa
+  con un clic en el teléfono o en PC (abrir con el navegador y jugar).
+- **NexoFPS-1.6.0-web-standalone.zip** — el juego completo en un solo HTML (ZIP).
   Descomprime, abre `NexoFPS.html` con doble clic y juega (Entrenamiento contra
   bots, sin internet). Windows / macOS / Linux / navegador del teléfono.
 - **NexoFPS-1.6.0-servidor.zip** — servidor dedicado para partidas online
