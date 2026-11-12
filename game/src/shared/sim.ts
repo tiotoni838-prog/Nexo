@@ -205,6 +205,9 @@ export class MatchSim {
   items: GroundItem[] = [];
   walls: CoverWall[] = [];
   airdropTimerMs = 45_000;
+  redZone: { x: number; y: number; r: number; untilMs: number } | null = null;
+  redZoneNextMs = 50_000;
+  redZoneBombMs = 0;
   events: SimEvent[] = [];
   dropEndsAtMs: number;
   mode: (typeof GAME_MODES)[GameModeId];
@@ -711,7 +714,13 @@ export class MatchSim {
       remaining -= absorbed;
     }
     victim.hp -= remaining;
-    this.events.push({ kind: 'hit', victimId: victim.id, playerId: killer?.id });
+    this.events.push({
+      kind: 'hit',
+      victimId: victim.id,
+      playerId: killer?.id,
+      x: killer?.x,
+      y: killer?.y,
+    });
     if (victim.hp <= 0) this.killPlayer(victim, killer);
   }
 
@@ -822,6 +831,40 @@ export class MatchSim {
     return (px - cx) * (px - cx) + (py - cy) * (py - cy) <= r * r;
   }
 
+  /** Zona roja: bombardeos aleatorios durante 10 s cada ~50 s. */
+  private stepRedZone(dtMs: number): void {
+    if (this.redZone) {
+      this.redZoneBombMs -= dtMs;
+      if (this.redZoneBombMs <= 0) {
+        this.redZoneBombMs = 1500;
+        const angle = this.rng.next() * Math.PI * 2;
+        const dist = Math.sqrt(this.rng.next()) * this.redZone.r;
+        this.explodeAt(
+          this.redZone.x + Math.cos(angle) * dist,
+          this.redZone.y + Math.sin(angle) * dist,
+          0,
+          90,
+          140,
+        );
+      }
+      if (this.timeMs >= this.redZone.untilMs) this.redZone = null;
+      return;
+    }
+    if (this.timeMs >= this.redZoneNextMs) {
+      this.redZoneNextMs = this.timeMs + 50_000;
+      const angle = this.rng.next() * Math.PI * 2;
+      const dist = this.rng.next() * WORLD_RADIUS * 0.6;
+      this.redZone = {
+        x: Math.cos(angle) * dist,
+        y: Math.sin(angle) * dist,
+        r: 260,
+        untilMs: this.timeMs + 10_000,
+      };
+      this.redZoneBombMs = 500;
+      this.events.push({ kind: 'zone', x: this.redZone.x, y: this.redZone.y });
+    }
+  }
+
   private checkVictory(): void {
     if (this.phase !== 'play') return;
     const alivePlayers = this.players.filter((p) => p.alive);
@@ -883,6 +926,8 @@ export class MatchSim {
         this.airdropTimerMs = 45_000;
         this.spawnAirdrop();
       }
+
+      this.stepRedZone(dtMs);
 
       updateZone(this.zone, dtMs * this.mode.zoneSpeedMult, this.rng);
       const dps = zoneDps(this.zone);

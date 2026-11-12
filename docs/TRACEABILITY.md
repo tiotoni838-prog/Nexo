@@ -69,11 +69,25 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 | Cosméticos: sprays, paracaídas, marcos, insignias, mascotas | `shared/locker.ts` (9 slots), `paypal/store.ts` (10 artículos nuevos en NX/Dalos) | `test/paypal.test.ts` + `test/meta.test.ts` (catálogo) | ídem |
 | Volumen general/música/efectos aplicado a SFX | `client/audio.ts` setVolumes/scaled | manual | — |
 
+## v1.3.0 — descargables nativos de escritorio y gráficos/entorno
+
+| Función | Implementación | Verificación | Evidencia |
+|---|---|---|---|
+| Aplicación nativa Windows/Linux/macOS (Electron 33) | `game/electron/main.js`, `game/scripts/build-desktop.mjs` (@electron/packager), script npm `desktop` | builds en `game/dist-desktop/` (win32-x64, linux-x64, darwin-x64, darwin-arm64); zips podados <100 MB en `releases/` | `app.asar` verificado (main.js, nexofps.html, package.json) |
+| 4 presets de calidad (Baja 30 FPS / Media / Alta / Ultra 90+) | `shared/graphics.ts` QUALITY_PRESETS/normalizeQuality, `client/settings.ts` migración | `test/graphics.test.ts` | `npm test` 111/111 ✓ |
+| Ciclo día-noche 8 min (día/atardecer/noche/amanecer) | `shared/graphics.ts` timeOfDay, `client/render.ts` overlay de oscuridad | `test/graphics.test.ts` | ídem |
+| Nubes en movimiento + cielo dinámico | `client/render.ts` drawClouds | manual | — |
+| Zona roja con bombardeos cada ~50 s | `shared/sim.ts` redZone/stepRedZone (explodeAt), `protocol.ts` SnapshotMsg.redZone, `server/gameServer.ts`, `client/render.ts` drawRedZone | `npm run build` ✓ + smoke | — |
+| Brújula + coordenadas de cuadrícula A1–H8 | `shared/graphics.ts` gridLabel, `client/index.html` compass/gridCoords, `client/main.ts` renderCompass | `test/graphics.test.ts` | ídem |
+| Flechas de dirección de daño + bordes rojos | `shared/graphics.ts` damageAngle, `client/main.ts` showDamageDirection, evento `hit` con x/y del atacante, `styles.css` #hud.hurt | `test/graphics.test.ts` | ídem |
+| 6 rarezas con color + modo daltónico en rarezas | `shared/graphics.ts` RARITY_COLORS/COLORBLIND_RARITY_COLORS/rarityColor | `test/graphics.test.ts` | ídem |
+| Filtros de color (cálido/frío/B&N) + reducir efectos | `shared/graphics.ts` FILTER_CSS/canvasFilter, `client/settings.ts` filter/reduceEffects, `client/render.ts` setStyle | `test/graphics.test.ts` | ídem |
+
 ## Bloqueos registrados
 
-1. **Builds nativos (APK/AAB, instaladores)**: sin toolchain Android/iOS/Electron en el
-   entorno. Instrucción reproducible: migrar el dominio compartido a Godot 4 (ADR-0001)
-   o empaquetar el cliente web con Capacitor/Tauri cuando haya toolchain.
+1. **APK/AAB e iOS firmados**: requieren Android Studio / Xcode (no disponibles en el
+   entorno). El proyecto WebView está listo; instrucciones reproducibles en OPERATIONS.md.
+   macOS supera los 100 MB por archivo de GitHub: se genera con `npm run desktop`.
 2. **Prueba E2E P2P entre dispositivos**: requiere dos navegadores reales; el código
    WebRTC está implementado y tipado, pendiente de verificación manual con el procedimiento
    de OPERATIONS.md.

@@ -383,6 +383,13 @@ export class GameServer {
         h: Math.round(w.h),
         hp: Math.round(w.hp),
       })),
+      redZone: this.sim.redZone
+        ? {
+            x: Math.round(this.sim.redZone.x),
+            y: Math.round(this.sim.redZone.y),
+            r: Math.round(this.sim.redZone.r),
+          }
+        : null,
     };
 
     for (const client of this.clients.values()) {

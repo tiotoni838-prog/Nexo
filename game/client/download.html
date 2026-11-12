@@ -9,56 +9,65 @@
   :root { color-scheme: dark; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    min-height: 100vh; font-family: system-ui, sans-serif; color: #e8eef7;
-    background: radial-gradient(1100px 620px at 50% -8%, rgba(108,196,255,0.16), transparent 60%),
-                radial-gradient(900px 560px at 85% 110%, rgba(176,124,255,0.14), transparent 55%),
-                linear-gradient(180deg, #070b12, #101a2e);
-    display: flex; flex-direction: column; align-items: center; padding: 40px 16px 60px;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; font-family: system-ui, sans-serif;
+    background: radial-gradient(1200px 700px at 50% -10%, #16233f 0%, #070b14 60%);
+    color: #e8eefc; padding: 28px;
   }
-  img { width: 110px; filter: drop-shadow(0 0 18px rgba(108,196,255,0.45)); }
-  h1 { font-size: 30px; letter-spacing: 3px; margin: 10px 0 4px;
-       background: linear-gradient(90deg, #6cc4ff, #b07cff); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .ver { color: #8ea0c0; margin-bottom: 30px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; max-width: 760px; width: 100%; }
+  img[alt="Nexo FPS"] { width: 96px; height: 96px; }
+  h1 { letter-spacing: 6px; margin-top: 10px; font-size: 30px; }
+  h1 small { display: block; letter-spacing: 2px; font-size: 12px; color: #8ea0c0; margin-top: 4px; }
+  p.ver { color: #38e1c8; font-size: 14px; margin-top: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 26px; max-width: 900px; width: 100%; }
   a.dl {
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    padding: 22px 16px; border-radius: 14px; text-decoration: none; color: #fff; font-weight: 800; font-size: 17px;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
-    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex; flex-direction: column; gap: 6px; padding: 18px;
+    border: 1px solid rgba(120,150,220,0.25); border-radius: 14px;
+    background: rgba(20,30,55,0.6); color: inherit; text-decoration: none;
+    font-weight: 700; font-size: 16px; transition: transform .12s ease, border-color .12s ease;
   }
-  a.dl:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(108,196,255,0.25); }
-  a.dl small { font-weight: 400; color: #8ea0c0; font-size: 12px; }
+  a.dl:hover { transform: translateY(-2px); border-color: rgba(56,225,200,0.7); }
   a.dl.ready { border-color: rgba(56,225,200,0.5); }
   a.dl.soon { opacity: 0.55; cursor: default; }
   .icon { font-size: 30px; }
+  a.dl small { font-weight: 400; color: #8ea0c0; font-size: 12px; }
   .note { max-width: 760px; margin-top: 26px; color: #8ea0c0; font-size: 13px; line-height: 1.6; text-align: center; }
 </style>
 </head>
 <body>
   <img src="/client/logo.svg" alt="Nexo FPS" />
-  <h1>NEXO FPS</h1>
-  <p class="ver">Versión 1.1.0 · Battle Royale</p>
+  <h1>NEXO FPS<small>BATTLE ROYALE</small></h1>
+  <p class="ver">Versión 1.3.0 · Descargables nativos</p>
   <div class="grid">
-    <a class="dl ready" href="https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.0.0-web-standalone.zip">
-      <span class="icon">🪟</span> Windows <small>ZIP · juega con doble clic · también macOS 🍎 y Linux 🐧</small>
+    <a class="dl ready" href="https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-windows-x64.zip">
+      <span class="icon">🪟</span> Windows <small>Nativo (Electron) · descomprime y ejecuta nexo-fps.exe</small>
     </a>
-    <a class="dl ready" href="https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.0.0-servidor.zip">
+    <a class="dl ready" href="https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-linux-x64.zip">
+      <span class="icon">🐧</span> Linux <small>Nativo (Electron) · descomprime y ejecuta ./nexo-fps</small>
+    </a>
+    <a class="dl soon" href="javascript:void(0)" title="Generar con npm run desktop">
+      <span class="icon">🍎</span> macOS <small>Nativo (Electron) · se genera con `npm run desktop` (supera 100 MB por archivo de GitHub)</small>
+    </a>
+    <a class="dl soon" href="javascript:void(0)" title="Requiere Android Studio — ver docs/OPERATIONS.md">
+      <span class="icon">🤖</span> APK Android <small>Proyecto WebView listo · se empaqueta con Android Studio</small>
+    </a>
+    <a class="dl soon" href="javascript:void(0)" title="Requiere Xcode en macOS — ver docs/OPERATIONS.md">
+      <span class="icon">📱</span> iOS / iPhone <small>Proyecto WebView listo · se firma con Xcode</small>
+    </a>
+    <a class="dl ready" href="https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-web-standalone.zip">
+      <span class="icon">🎮</span> Un solo archivo <small>NexoFPS.html · doble clic y juega · también en el navegador del móvil</small>
+    </a>
+    <a class="dl ready" href="https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-servidor.zip">
       <span class="icon">🖥️</span> Servidor online <small>Node.js 20+ · tienda PayPal · panel de ganancias</small>
-    </a>
-    <a class="dl soon" href="javascript:void(0)">
-      <span class="icon">🤖</span> APK Android <small>Próximamente — requiere Android Studio (ver LEEME)</small>
-    </a>
-    <a class="dl soon" href="javascript:void(0)">
-      <span class="icon">📱</span> iOS <small>Próximamente — requiere Xcode en Mac (ver LEEME)</small>
     </a>
   </div>
   <p class="note">
-    La versión <b>Windows / macOS / Linux</b> es el archivo ZIP: descomprime y abre
-    <b>NexoFPS.html</b> — no necesita instalación ni internet para el modo Entrenamiento.<br />
+    Las versiones <b>Windows y Linux</b> son aplicaciones nativas: descomprime el ZIP y ejecuta el
+    binario — no abren navegador.<br />
     En <b>teléfono</b> ya puedes jugar hoy: abre esta misma página en el navegador del móvil,
     pulsa ⛶ pantalla completa en el menú y usa los controles táctiles.<br />
-    El <b>APK</b> y <b>iOS</b> nativos se generan con Android Studio / Xcode; el proyecto ya
-    incluye las instrucciones (docs/OPERATIONS.md).
+    <b>macOS</b> se genera localmente con <code>cd game &amp;&amp; npm run desktop</code> (carpeta
+    <code>dist-desktop/</code>). El <b>APK</b> y <b>iOS</b> se generan con Android Studio / Xcode:
+    instrucciones en <b>docs/OPERATIONS.md</b>.
   </p>
 </body>
 </html>

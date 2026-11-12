@@ -3,6 +3,7 @@ import type { SnapshotMsg, NetPlayer } from '../shared/protocol.js';
 import { WORLD_RADIUS, MAP_SIZE } from '../shared/constants.js';
 import { CHARACTERS } from '../shared/characters.js';
 import { ParticleSystem } from './effects.js';
+import { canvasFilter, rarityColor, timeOfDay, type ColorFilter } from '../shared/graphics.js';
 
 const RARITY_COLORS: Record<string, string> = {
   comun: '#b7c3d8',
@@ -27,6 +28,7 @@ export class Renderer {
   private ctx: CanvasRenderingContext2D;
   dpr = 1;
   particles = new ParticleSystem();
+  private currentDarkness = 0;
   private shakeMs = 0;
   private shakeIntensity = 0;
   private timeMs = 0;
@@ -35,12 +37,38 @@ export class Renderer {
   dprCap = 3;
   shadows = true;
   brightness = 1;
+  filter: ColorFilter = 'off';
+  reduceEffects = false;
+  colorblind: string = 'off';
 
   setQuality(dprCap: number, shadows: boolean, brightness: number): void {
     this.dprCap = dprCap;
     this.shadows = shadows;
     this.brightness = brightness;
     this.resize();
+  }
+
+  setStyle(filter: ColorFilter, reduceEffects: boolean, colorblind: string): void {
+    this.filter = filter;
+    this.reduceEffects = reduceEffects;
+    this.colorblind = colorblind;
+  }
+
+  private drawClouds(): void {
+    const { ctx, canvas } = this;
+    const drift = (this.timeMs * 0.008) % (canvas.width + 400);
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.045)';
+    for (let i = 0; i < 6; i++) {
+      const baseX = ((i * 397) % (canvas.width + 400)) - drift;
+      const x = baseX < -200 ? baseX + canvas.width + 400 : baseX;
+      const y = ((i * 233) % Math.max(1, canvas.height * 0.8)) + 40;
+      const w = (140 + (i * 61) % 160) * this.dpr;
+      ctx.beginPath();
+      ctx.ellipse(x, y, w, w * 0.35, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   addShake(ms: number, intensity: number): void {
@@ -72,15 +100,17 @@ export class Renderer {
   render(state: RenderState): void {
     const { ctx, canvas } = this;
     const snap = state.snapshot;
-    if (this.brightness !== 1) ctx.filter = `brightness(${this.brightness})`;
-    else ctx.filter = 'none';
-    ctx.fillStyle = state.map?.palette.sky ?? '#0a0e17';
+    ctx.filter = canvasFilter(this.brightness, this.filter);
+    const tod = timeOfDay(this.timeMs);
+    this.currentDarkness = tod.darkness;
+    ctx.fillStyle = state.map?.palette.sky ?? tod.sky;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (!snap || !state.map) return;
 
     this.timeMs += state.dtMs;
     this.particles.update(state.dtMs);
     if (this.shakeMs > 0) this.shakeMs -= state.dtMs;
+    this.drawClouds();
 
     const me = snap.players.find((p) => p.id === state.yourId);
     let focus = me && me.alive ? me : null;
@@ -95,7 +125,8 @@ export class Renderer {
     if (!focus) return;
 
     const zoom = Math.min(canvas.width, canvas.height) / (900 * this.dpr) * this.dpr;
-    const shake = this.shakeMs > 0 ? this.shakeIntensity * (this.shakeMs / 300) : 0;
+    const shakeScale = this.reduceEffects ? 0.3 : 1;
+    const shake = this.shakeMs > 0 ? this.shakeIntensity * (this.shakeMs / 300) * shakeScale : 0;
     const camX = focus.x + (shake ? (Math.random() - 0.5) * shake : 0);
     const camY = focus.y + (shake ? (Math.random() - 0.5) * shake : 0);
 
@@ -107,6 +138,7 @@ export class Renderer {
     this.trackMovement(snap, state.dtMs);
     this.drawGrid(camX, camY, zoom);
     this.drawZone(snap, camX, camY, zoom);
+    this.drawRedZone(snap, camX, camY, zoom);
     this.drawMap(state.map, camX, camY, zoom);
     this.drawWalls(snap, camX, camY, zoom);
     this.drawShadows(state.map, snap, camX, camY, zoom);
@@ -116,6 +148,13 @@ export class Renderer {
     this.drawPlayers(snap, state, camX, camY, zoom);
     this.particles.draw(this.ctx, toScreen, this.dpr);
     this.drawPoiNames(state.map, camX, camY, zoom);
+    if (this.currentDarkness > 0) {
+      ctx.save();
+      ctx.filter = 'none';
+      ctx.fillStyle = `rgba(4, 8, 24, ${this.currentDarkness})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
     this.drawVignette();
     this.drawMinimap(snap, state.map, state.yourId);
   }
@@ -266,6 +305,23 @@ export class Renderer {
     }
   }
 
+  private drawRedZone(snap: SnapshotMsg, camX: number, camY: number, zoom: number): void {
+    if (!snap.redZone) return;
+    const { ctx } = this;
+    const [zx, zy] = this.worldToScreen(camX, camY, zoom, snap.redZone.x, snap.redZone.y);
+    const zr = snap.redZone.r * zoom;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(zx, zy, zr, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 60, 60, 0.14)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 80, 80, 0.85)';
+    ctx.setLineDash([10 * this.dpr, 6 * this.dpr]);
+    ctx.lineWidth = 2 * this.dpr;
+    ctx.stroke();
+    ctx.restore();
+  }
+
   private drawMap(map: GameMap, camX: number, camY: number, zoom: number): void {
     const { ctx } = this;
     const palette = map.palette ?? {
@@ -286,7 +342,7 @@ export class Renderer {
     const { ctx } = this;
     for (const item of snap.items) {
       const [sx, sy] = this.worldToScreen(camX, camY, zoom, item.x, item.y);
-      const color = RARITY_COLORS[item.rarity] ?? '#b7c3d8';
+      const color = rarityColor(item.rarity, this.colorblind);
       const legendary = item.rarity === 'legendario';
       const size = (legendary ? 13 : 9) * zoom * this.dpr * 0.5;
       if (legendary) {

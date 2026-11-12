@@ -216,9 +216,10 @@
         <div class="row">
           <label for="selQuality">Calidad</label>
           <select id="selQuality">
-            <option value="bajo">Bajo</option>
-            <option value="medio">Medio</option>
-            <option value="alto">Alto</option>
+            <option value="baja">Baja (30 FPS, celular viejo)</option>
+            <option value="media">Media (60 FPS)</option>
+            <option value="alta">Alta (60 FPS + sombras)</option>
+            <option value="ultra">Ultra (90-120 FPS)</option>
           </select>
         </div>
         <div class="row">
@@ -280,6 +281,19 @@
           <label for="chkDataSaver">Ahorro de datos</label>
           <input type="checkbox" id="chkDataSaver" />
         </div>
+        <div class="row">
+          <label for="selFilter">Filtro de color</label>
+          <select id="selFilter">
+            <option value="off">Normal</option>
+            <option value="calido">Cálido</option>
+            <option value="frio">Frío</option>
+            <option value="bn">Blanco y negro</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="chkReduceFx">Reducir efectos (sacudidas y destellos)</label>
+          <input type="checkbox" id="chkReduceFx" />
+        </div>
         <h3 data-i18n="keybinds"></h3>
         <div id="keybindList" class="keybind-list"></div>
         <button id="btnBackSettings" class="btn" data-i18n="backToMenu"></button>
@@ -294,8 +308,11 @@
           <span id="aliveCount"></span>
           <span id="zoneTimer"></span>
           <span id="mapName"></span>
+          <span id="gridCoords"></span>
           <span id="ping"></span>
         </div>
+        <div id="compass"><div id="compassStrip"></div></div>
+        <div id="damageArrows"></div>
         <div id="killfeed"></div>
         <div id="subtitleBar" class="hidden"></div>
         <div id="vitals">

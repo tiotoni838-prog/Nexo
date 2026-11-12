@@ -118,6 +118,7 @@ export interface SnapshotMsg {
   grenades: NetGrenade[];
   items: NetItem[];
   walls: NetWall[];
+  redZone?: { x: number; y: number; r: number } | null;
   you: { hp: number; shield: number; ammo: number; mag: number; botiquines: number; escudos: number; grenades: number; activeSlot: number; weapons: Array<{ weaponId: WeaponId; rarity: Rarity; ammoInMag: number } | null>; reloading: boolean; characterId: CharacterId; abilityCooldownMs: number; prone: boolean } | null;
 }
 

@@ -1,6 +1,8 @@
 import { t, type Lang } from '../shared/i18n.js';
+import { QUALITY_PRESETS, normalizeQuality, type QualityPreset, type ColorFilter } from '../shared/graphics.js';
 
-export type QualityLevel = 'bajo' | 'medio' | 'alto';
+export type QualityLevel = QualityPreset;
+export type { ColorFilter };
 export type ColorblindMode = 'off' | 'protanopia' | 'deuteranopia' | 'tritanopia';
 
 export interface Settings {
@@ -22,18 +24,22 @@ export interface Settings {
   damageIndicators: boolean;
   region: string;
   dataSaver: boolean;
+  filter: ColorFilter;
+  reduceEffects: boolean;
 }
 
 export const QUALITY_DPR_CAP: Record<QualityLevel, number> = {
-  bajo: 1,
-  medio: 1.5,
-  alto: 3,
+  baja: QUALITY_PRESETS.baja.dprCap,
+  media: QUALITY_PRESETS.media.dprCap,
+  alta: QUALITY_PRESETS.alta.dprCap,
+  ultra: QUALITY_PRESETS.ultra.dprCap,
 };
 
 export const QUALITY_PARTICLES: Record<QualityLevel, number> = {
-  bajo: 120,
-  medio: 350,
-  alto: 600,
+  baja: QUALITY_PRESETS.baja.particles,
+  media: QUALITY_PRESETS.media.particles,
+  alta: QUALITY_PRESETS.alta.particles,
+  ultra: QUALITY_PRESETS.ultra.particles,
 };
 
 export const REGIONS: Array<{ id: string; es: string; en: string }> = [
@@ -78,7 +84,7 @@ export const loadSettings = (): Settings => {
         subtitles: parsed.subtitles !== false,
         wings: parsed.wings !== false,
         keys: { ...DEFAULT_KEYS, ...(parsed.keys ?? {}) },
-        quality: parsed.quality === 'bajo' || parsed.quality === 'alto' ? parsed.quality : 'medio',
+        quality: normalizeQuality(parsed.quality),
         fpsCap: typeof parsed.fpsCap === 'number' && parsed.fpsCap >= 30 ? parsed.fpsCap : 60,
         shadows: parsed.shadows !== false,
         brightness: clamp01(parsed.brightness, 1),
@@ -94,6 +100,11 @@ export const loadSettings = (): Settings => {
         damageIndicators: parsed.damageIndicators !== false,
         region: typeof parsed.region === 'string' ? parsed.region : 'auto',
         dataSaver: parsed.dataSaver === true,
+        filter:
+          parsed.filter === 'calido' || parsed.filter === 'frio' || parsed.filter === 'bn'
+            ? parsed.filter
+            : 'off',
+        reduceEffects: parsed.reduceEffects === true,
       };
     }
   } catch {
@@ -107,7 +118,7 @@ export const loadSettings = (): Settings => {
     subtitles: true,
     wings: true,
     keys: { ...DEFAULT_KEYS },
-    quality: 'medio',
+    quality: 'media',
     fpsCap: 60,
     shadows: true,
     brightness: 1,
@@ -118,6 +129,8 @@ export const loadSettings = (): Settings => {
     damageIndicators: true,
     region: 'auto',
     dataSaver: false,
+    filter: 'off',
+    reduceEffects: false,
   };
 };
 

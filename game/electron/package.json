@@ -1,0 +1,9 @@
+{
+  "name": "nexo-fps",
+  "productName": "Nexo FPS",
+  "version": "1.3.0",
+  "description": "Battle Royale original. Tu dispositivo puede ser el servidor.",
+  "main": "main.js",
+  "author": "Nexo",
+  "license": "UNLICENSED"
+}

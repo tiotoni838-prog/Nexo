@@ -4,7 +4,7 @@ Battle Royale original, competitivo y accesible. Este repositorio contiene la
 **especificación de ingeniería** (`NEXO_FRONTIER_MEGA_SPEC.part*`, 100.000 fichas de
 trabajo) y el **vertical slice jugable** en `game/`.
 
-## Qué hay implementado (v1.2.0, verificado)
+## Qué hay implementado (v1.3.0, verificado)
 
 - **Simulación autoritativa compartida** (`game/src/shared/`): movimiento con colisiones,
   **12 armas** con rarezas y daño inspirado en balística real (incluido **lanzacohetes
@@ -57,19 +57,46 @@ trabajo) y el **vertical slice jugable** en `game/`.
   (`ADMIN_TOKEN`) que consulta la API de transacciones de PayPal y muestra total USD,
   número de operaciones y desglose por artículo. Endpoint JSON: `/api/admin/earnings?days=N`.
 
-## Descargar y jugar (v1.2.0)
+## Descargar y jugar (v1.3.0)
 
 En la carpeta [`releases/`](releases/) del repo (o en `/download` del servidor de juego,
 con botones por plataforma):
 
-- **[NexoFPS-1.2.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.2.0-web-standalone.zip)** —
+- **[NexoFPS-1.3.0-windows-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-windows-x64.zip)** —
+  **aplicación nativa de Windows** (Electron 33): descomprime y ejecuta `nexo-fps.exe`.
+- **[NexoFPS-1.3.0-linux-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-linux-x64.zip)** —
+  **aplicación nativa de Linux**: descomprime y ejecuta `./nexo-fps`.
+- **NexoFPS-1.3.0-macos** — se genera con `cd game && npm run desktop`
+  (`dist-desktop/NexoFPS-darwin-x64` y `-arm64`); no se aloja en Git por superar los
+  100 MB por archivo de GitHub.
+- **[NexoFPS-1.3.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-web-standalone.zip)** —
   el juego completo en UN archivo HTML. Descomprime, abre `NexoFPS.html` con doble clic
   y juega contra bots sin internet. Windows / macOS / Linux. También funciona en el
   navegador del **teléfono** (controles táctiles + pantalla completa).
-- **[NexoFPS-1.2.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.2.0-servidor.zip)** —
+- **[NexoFPS-1.3.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-servidor.zip)** —
   servidor dedicado (Node.js 20+) con tienda PayPal y panel de ganancias.
 
+Android (APK) e iOS: el proyecto WebView nativo se empaqueta con Android Studio /
+Xcode — instrucciones en `docs/OPERATIONS.md` (no se alojan binarios sin build
+verificada de esos IDE).
+
 Para anunciar el juego en **Discord**: guía y embed listos en [`discord/DISCORD.md`](discord/DISCORD.md).
+
+### Gráficos y entorno (v1.3.0)
+- **4 presets de calidad** (`game/src/shared/graphics.ts`): Baja (30 FPS), Media,
+  Alta y Ultra (90+ FPS) con tope de DPR, densidad de partículas, sombras y objetivo
+  de FPS; migración automática de ajustes antiguos.
+- **Ciclo día-noche** de 8 minutos con 4 fases (día, atardecer, noche, amanecer):
+  el cielo cambia de color y la oscuridad se aplica sobre el mundo.
+- **Nubes en movimiento**, **zona roja** con bombardeos cada ~50 s (explosiones con
+  daño en área y aviso en pantalla) y muro de zona segura visible.
+- **HUD extendido**: **brújula** de 8 direcciones, **coordenadas de cuadrícula**
+  ("estoy en C4", 8×8), **flechas de dirección de daño** y bordes rojos al recibir
+  daño; **chat rápido** y killfeed ya existentes.
+- **6 rarezas con color** (gris/verde/azul/morado/dorado/rojo) y **modo daltónico**
+  (protanopia, deuteranopia, tritanopia) aplicado también a rarezas.
+- **Filtros de color**: normal, cálido, frío y blanco y negro; opción **reducir
+  efectos** (menos sacudidas y destellos) para accesibilidad.
 
 ### Meta-juego (v1.2.0)
 - **Monedas**: **Dalos** (se compran con PayPal, 4 paquetes con bono) y **NX** (se ganan
@@ -136,7 +163,8 @@ partida** (tu dispositivo hace de servidor P2P) o **Unirse** (WebSocket o P2P).
 
 ## Estado honesto
 
-Esto es un **vertical slice**, no el juego comercial completo: los builds nativos
-(Android/iOS/Windows/Linux), matchmaking global, cuentas, moderación y voz quedan para
-las fases 3–6 de la spec maestra. No se afirma rendimiento sin medir; no se declara
-compatibilidad de plataforma sin build y pruebas reales.
+Esto es un **vertical slice**, no el juego comercial completo: hay builds nativas de
+escritorio (Windows/Linux/macOS vía Electron), pero APK/iOS firmados, matchmaking
+global, voz y moderación avanzada quedan para las fases 4–6 de la spec maestra. No se
+afirma rendimiento sin medir; no se declara compatibilidad de plataforma sin build y
+pruebas reales.

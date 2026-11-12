@@ -15,6 +15,8 @@ import {
 } from './settings.js';
 import { initAuthScreen } from './auth.js';
 import { GAME_MODES, isGameModeId, type GameModeId } from '../shared/gameModes.js';
+import { damageAngle, gridLabel } from '../shared/graphics.js';
+import { WORLD_RADIUS } from '../shared/constants.js';
 import { t } from '../shared/i18n.js';
 import { WEAPONS } from '../shared/weapons.js';
 import { CHARACTERS, CHARACTER_IDS, type CharacterId } from '../shared/characters.js';
@@ -99,6 +101,7 @@ let spectateId: number | undefined;
 const applyRenderQuality = (): void => {
   renderer.setQuality(QUALITY_DPR_CAP[settings.quality], settings.shadows, settings.brightness);
   renderer.particles.setMaxParticles(QUALITY_PARTICLES[settings.quality]);
+  renderer.setStyle(settings.filter, settings.reduceEffects, settings.colorblind);
   sfx.setVolumes(settings.volMaster, settings.volMusic, settings.volSfx);
 };
 applyRenderQuality();
@@ -312,6 +315,14 @@ const handleServerMsg = (msg: ServerMsg): void => {
       }
       break;
     case 'event':
+      if (msg.kind === 'hit' && msg.victimId === yourId && settings.damageIndicators) {
+        showDamageDirection(msg.x, msg.y);
+      }
+      if (msg.kind === 'hit' && msg.victimId === yourId) {
+        $('hud').classList.add('hurt');
+        window.setTimeout(() => $('hud').classList.remove('hurt'), 450);
+        sfx.hurt();
+      }
       if (msg.kind === 'kill' && typeof msg.killerName === 'string' && typeof msg.victimName === 'string') {
         addKillFeed(`☠ ${msg.killerName} → ${msg.victimName}`);
         subtitle(`${msg.killerName} eliminó a ${msg.victimName}`);
@@ -363,6 +374,26 @@ const handleServerMsg = (msg: ServerMsg): void => {
   }
 };
 
+const showDamageDirection = (fromX?: number, fromY?: number): void => {
+  if (fromX === undefined || fromY === undefined) return;
+  const me = latestSnapshot?.players.find((p) => p.id === yourId);
+  if (!me) return;
+  const angle = damageAngle(fromX, fromY, me.x, me.y, me.aim);
+  const arrow = document.createElement('div');
+  arrow.className = 'dmg-arrow';
+  arrow.textContent = '▲';
+  arrow.style.transform = `rotate(${angle}rad) translate(0, -120px)`;
+  $('damageArrows').appendChild(arrow);
+  window.setTimeout(() => arrow.remove(), 1500);
+};
+
+const renderCompass = (aim: number): void => {
+  const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+  const deg = ((-aim * 180) / Math.PI + 360) % 360;
+  const idx = Math.round(deg / 45) % 8;
+  $('compassStrip').textContent = `← ${dirs[(idx + 7) % 8]} · [${dirs[idx]}] · ${dirs[(idx + 1) % 8]} →`;
+};
+
 const whoName = (playerId?: number): string =>
   latestSnapshot?.players.find((p) => p.id === playerId)?.name ?? '?';
 
@@ -380,6 +411,10 @@ const updateHud = (snap: SnapshotMsg): void => {
   const aliveSelf = snap.you;
 
   $('aliveCount').textContent = `${t('alive', settings.lang)}: ${snap.alive}`;
+  if (you) {
+    $('gridCoords').textContent = gridLabel(you.x, you.y, WORLD_RADIUS);
+    renderCompass(you.aim);
+  }
 
   if (snap.phase === 'drop') {
     $('zoneTimer').textContent = t('chooseDrop', settings.lang);
@@ -794,6 +829,14 @@ bindCheck('chkDamage', () => settings.damageIndicators, (v) => {
 });
 bindCheck('chkDataSaver', () => settings.dataSaver, (v) => {
   settings.dataSaver = v;
+});
+bindSelect('selFilter', () => settings.filter, (v) => {
+  settings.filter = v as Settings['filter'];
+  applyRenderQuality();
+});
+bindCheck('chkReduceFx', () => settings.reduceEffects, (v) => {
+  settings.reduceEffects = v;
+  applyRenderQuality();
 });
 
 const bindRange = (id: string, get: () => number, set: (value: number) => void): void => {
