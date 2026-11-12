@@ -43,6 +43,34 @@ servidor en tiempo real. Lo que sí queda hecho en el repo:
    Application → Bot → copia token → añade `DISCORD_BOT_TOKEN` y `DISCORD_GUILD_ID`
    a `game/.env` y avísame: implemento el bot de verificación/canje/perfil contra él.
 
+**¿No sabes crear el servidor? Ruta desde cero (15 min):**
+1. Abre Discord → botón **+** en la barra izquierda → **Crear mi servidor** →
+   nombre "Nexo FPS" (sube `game/client/logo.svg` como icono).
+2. Crea los canales copiando la lista de `discord/DISCORD.md` §2 (empieza solo
+   con: `#reglas`, `#verificación`, `#noticias`, `#soporte`, `#chat-general`,
+   `#buscar-equipo`; el resto puedes añadirlo después).
+3. En `#noticias`: Integraciones → Webhooks → Nuevo webhook → copia la URL.
+4. Publica el anuncio con el comando del paso 2 de arriba (`discord/embed.json`
+   ya lleva los enlaces de descarga de Windows/Linux/macOS/web y servidor).
+5. Invita a tus amigos/moderadores y asígnales roles (`discord/DISCORD.md` §4).
+
+**Sobre los botones de descarga dentro de Discord:** los webhooks normales no
+pueden enviar botones interactivos (Discord solo lo permite a bots de
+aplicación). Hoy el embed lleva enlaces por plataforma; cuando me pases
+`DISCORD_BOT_TOKEN`, el bot publicará el anuncio con **botones reales**
+(Windows / macOS / Linux / APK-iOS / Servidor) y los comandos `/vincular`,
+`/canjear`, `/perfil` y `/estado`.
+
+### Flujo de aprobación del dueño (IA recomienda, humano decide)
+- **Telegram** es TU canal de administración: el servidor del juego te avisa de
+  ventas, reportes, canjes y baneos detectados por el anti-cheat. Tú respondes
+  aprobando o denegando (hoy: confirmas en el panel `/admin`; cuando actives el
+  bot de Discord también podrás decidir desde allí).
+- **Discord** es el canal de los JUGADORES con IA de soporte: la IA responde
+  dudas, clasifica tickets y recomienda sanciones, pero **nunca banea sola** —
+  un humano (tú o un moderador) confirma.
+- Todo queda registrado: tickets, sanciones y canjes tienen log en el servidor.
+
 ## 4. Tiendas (cuando pagues la suscripción, avísame)
 - [ ] **Google Play Store**: cuenta de desarrollador (25 USD, una vez). Al tenerla:
   subimos el APK generado desde `game/android/` (guía en `docs/OPERATIONS.md`) y
