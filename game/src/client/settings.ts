@@ -6,6 +6,7 @@ export interface Settings {
   textScale: number;
   highContrast: boolean;
   subtitles: boolean;
+  wings: boolean;
   keys: Record<string, string>;
 }
 
@@ -20,6 +21,9 @@ const DEFAULT_KEYS: Record<string, string> = {
   shieldItem: 'KeyF',
   swap: 'Space',
   grenade: 'KeyG',
+  ability: 'KeyC',
+  slide: 'ShiftLeft',
+  prone: 'KeyZ',
 };
 
 const STORAGE_KEY = 'nexo-settings-v1';
@@ -35,13 +39,14 @@ export const loadSettings = (): Settings => {
         textScale: typeof parsed.textScale === 'number' ? parsed.textScale : 1,
         highContrast: parsed.highContrast === true,
         subtitles: parsed.subtitles !== false,
+        wings: parsed.wings !== false,
         keys: { ...DEFAULT_KEYS, ...(parsed.keys ?? {}) },
       };
     }
   } catch {
     // corrupted settings fall back to defaults
   }
-  return { lang: 'es', sensitivity: 1, textScale: 1, highContrast: false, subtitles: true, keys: { ...DEFAULT_KEYS } };
+  return { lang: 'es', sensitivity: 1, textScale: 1, highContrast: false, subtitles: true, wings: true, keys: { ...DEFAULT_KEYS } };
 };
 
 export const saveSettings = (s: Settings): void => {

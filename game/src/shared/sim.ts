@@ -38,6 +38,19 @@ import {
 } from './weapons.js';
 import { initialZone, isOutsideZone, updateZone, zoneDps, type ZoneState } from './zone.js';
 import { sanitizeName } from './validation.js';
+import {
+  CHARACTERS,
+  CHARACTER_IDS,
+  COVER_WALL,
+  PRONE_RADIUS,
+  PRONE_SPEED_MULT,
+  SLIDE_BOOST_MULT,
+  SLIDE_COOLDOWN_MS,
+  SLIDE_DURATION_MS,
+  SLIDE_RADIUS,
+  type AbilityId,
+  type CharacterId,
+} from './characters.js';
 
 export type MatchPhase = 'lobby' | 'drop' | 'play' | 'over';
 
@@ -47,6 +60,8 @@ export interface PlayerInput {
   aim: number;
   fire: boolean;
   seq: number;
+  slide?: boolean;
+  prone?: boolean;
 }
 
 export interface SimPlayer {
@@ -69,6 +84,24 @@ export interface SimPlayer {
   landing: boolean;
   dropChoice: Vec2 | null;
   placement: number;
+  characterId: CharacterId;
+  abilityReadyMs: number;
+  abilityEndsAtMs: number;
+  prone: boolean;
+  sliding: boolean;
+  slideEndsAtMs: number;
+  nextSlideMs: number;
+}
+
+export interface CoverWall {
+  id: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  hp: number;
+  expiresAtMs: number;
+  ownerId: number;
 }
 
 export interface Bullet {
@@ -94,7 +127,7 @@ export interface Grenade {
 }
 
 export interface SimEvent {
-  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone' | 'explosion' | 'airdrop';
+  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone' | 'explosion' | 'airdrop' | 'ability';
   killerId?: number;
   killerName?: string;
   victimId?: number;
@@ -104,6 +137,7 @@ export interface SimEvent {
   y?: number;
   playerId?: number;
   itemName?: string;
+  abilityId?: AbilityId;
 }
 
 export interface MatchConfig {
@@ -162,6 +196,7 @@ export class MatchSim {
   bullets: Bullet[] = [];
   grenades: Grenade[] = [];
   items: GroundItem[] = [];
+  walls: CoverWall[] = [];
   airdropTimerMs = 45_000;
   events: SimEvent[] = [];
   dropEndsAtMs: number;
@@ -170,6 +205,7 @@ export class MatchSim {
   private nextPlayerId = 1;
   private nextBulletId = 1;
   private nextGrenadeId = 1;
+  private nextWallId = 1;
   private nextPlacement = 0;
   private totalPlayers = 0;
 
@@ -202,8 +238,12 @@ export class MatchSim {
     return { x: 0, y: 0 };
   }
 
-  addPlayer(name: string, bot: boolean): SimPlayer {
+  addPlayer(name: string, bot: boolean, characterId?: CharacterId): SimPlayer {
     const spawn = this.randomSpawn();
+    const cid: CharacterId =
+      characterId && CHARACTER_IDS.includes(characterId)
+        ? characterId
+        : this.rng.pick(CHARACTER_IDS);
     const player: SimPlayer = {
       id: this.nextPlayerId++,
       name: sanitizeName(name),
@@ -224,6 +264,13 @@ export class MatchSim {
       landing: false,
       dropChoice: null,
       placement: 0,
+      characterId: cid,
+      abilityReadyMs: 0,
+      abilityEndsAtMs: -1,
+      prone: false,
+      sliding: false,
+      slideEndsAtMs: -1,
+      nextSlideMs: 0,
     };
     this.players.push(player);
     this.totalPlayers += 1;
@@ -268,6 +315,86 @@ export class MatchSim {
     player.input = normalizeInput({ ...input, aim: input.aim });
   }
 
+  effectiveRadius(player: SimPlayer): number {
+    if (player.prone) return PRONE_RADIUS;
+    if (player.sliding) return SLIDE_RADIUS;
+    return PLAYER_RADIUS;
+  }
+
+  abilityCooldownRemaining(playerId: number): number {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player) return 0;
+    return Math.max(0, player.abilityReadyMs - this.timeMs);
+  }
+
+  useAbility(playerId: number): AbilityId | null {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || !player.alive || this.phase !== 'play') return null;
+    if (this.timeMs < player.abilityReadyMs) return null;
+    const def = CHARACTERS[player.characterId];
+    player.abilityReadyMs = this.timeMs + def.ability.cooldownMs;
+    if (def.ability.durationMs > 0) player.abilityEndsAtMs = this.timeMs + def.ability.durationMs;
+    switch (def.ability.id) {
+      case 'muro':
+        this.deployCoverWall(player);
+        break;
+      case 'sprint':
+        break;
+      case 'resistencia':
+        break;
+      case 'recarga': {
+        const weapon = this.activeWeapon(player);
+        if (weapon) {
+          const wdef = WEAPONS[weapon.weaponId];
+          const need = wdef.magSize - weapon.ammoInMag;
+          const take = Math.min(need, player.inventory.ammo);
+          weapon.ammoInMag += take;
+          player.inventory.ammo -= take;
+          player.reloadEndMs = -1;
+        }
+        break;
+      }
+      case 'pulso':
+        player.hp = Math.min(MAX_HP, player.hp + 30);
+        break;
+      case 'sobrecarga':
+        break;
+    }
+    this.events.push({
+      kind: 'ability',
+      playerId: player.id,
+      abilityId: def.ability.id,
+      x: player.x,
+      y: player.y,
+    });
+    return def.ability.id;
+  }
+
+  private deployCoverWall(player: SimPlayer): void {
+    const cx = player.x + Math.cos(player.aim) * COVER_WALL.deployDistance;
+    const cy = player.y + Math.sin(player.aim) * COVER_WALL.deployDistance;
+    const half = COVER_WALL.width / 2;
+    const perpendicular = player.aim + Math.PI / 2;
+    const dx = Math.cos(perpendicular) * half;
+    const dy = Math.sin(perpendicular) * half;
+    const x = Math.min(cx - Math.abs(dx), cx + Math.abs(dx));
+    const y = Math.min(cy - Math.abs(dy), cy + Math.abs(dy));
+    this.walls.push({
+      id: this.nextWallId++,
+      x,
+      y,
+      w: Math.abs(dx) * 2 || COVER_WALL.height,
+      h: Math.abs(dy) * 2 || COVER_WALL.height,
+      hp: COVER_WALL.hp,
+      expiresAtMs: this.timeMs + COVER_WALL.durationMs,
+      ownerId: player.id,
+    });
+  }
+
+  private damageWall(wall: CoverWall, damage: number): void {
+    wall.hp -= damage;
+  }
+
   private activeWeapon(player: SimPlayer) {
     return player.inventory.weapons[player.inventory.activeWeapon] ?? null;
   }
@@ -290,17 +417,19 @@ export class MatchSim {
     if (!weapon) return false;
     const def = WEAPONS[weapon.weaponId];
     if (weapon.ammoInMag >= def.magSize || player.inventory.ammo <= 0) return false;
-    player.reloadEndMs = this.timeMs + def.reloadMs;
+    const reloadMult = CHARACTERS[player.characterId].passives.reloadMult;
+    player.reloadEndMs = this.timeMs + def.reloadMs * reloadMult;
     return true;
   }
 
   useConsumable(playerId: number, consumable: ConsumableId): boolean {
     const player = this.players.find((p) => p.id === playerId);
     if (!player || !player.alive || this.phase !== 'play') return false;
+    const healMult = CHARACTERS[player.characterId].passives.healMult;
     if (consumable === 'botiquin') {
       if (player.inventory.botiquines <= 0 || player.hp >= MAX_HP) return false;
       player.inventory.botiquines -= 1;
-      player.hp = Math.min(MAX_HP, player.hp + 50);
+      player.hp = Math.min(MAX_HP, player.hp + 50 * healMult);
     } else {
       if (player.inventory.escudos <= 0 || player.shield >= MAX_SHIELD) return false;
       player.inventory.escudos -= 1;
@@ -427,7 +556,10 @@ export class MatchSim {
       g.vy *= friction;
       let nx = g.x + g.vx * dtSec;
       let ny = g.y + g.vy * dtSec;
-      if (circleHitsObstacle(nx, ny, 4, this.map.obstacles)) {
+      if (
+        circleHitsObstacle(nx, ny, 4, this.map.obstacles) ||
+        this.walls.some((w) => circleHitsObstacle(nx, ny, 4, [w]))
+      ) {
         g.vx *= -0.4;
         g.vy *= -0.4;
         nx = g.x;
@@ -470,7 +602,8 @@ export class MatchSim {
     weapon.ammoInMag -= 1;
     player.lastFireMs = nowMs;
     player.firing = true;
-    const mult = RARITY_DAMAGE_MULT[weapon.rarity];
+    const passives = CHARACTERS[player.characterId].passives;
+    const mult = RARITY_DAMAGE_MULT[weapon.rarity] * (this.isAbilityActive(player, 'sobrecarga') ? 1.3 : 1);
     for (let i = 0; i < def.pellets; i++) {
       const spread = (this.rng.next() - 0.5) * 2 * def.spreadRad;
       const angle = player.aim + spread;
@@ -483,10 +616,17 @@ export class MatchSim {
         ownerId: player.id,
         damage: def.damage * mult,
         traveled: 0,
-        range: def.range,
+        range: def.range * passives.rangeMult,
       });
     }
     this.events.push({ kind: 'shot', playerId: player.id, x: player.x, y: player.y, weaponId: weapon.weaponId });
+  }
+
+  private isAbilityActive(player: SimPlayer, ability: AbilityId): boolean {
+    return (
+      player.abilityEndsAtMs > this.timeMs &&
+      CHARACTERS[player.characterId].ability.id === ability
+    );
   }
 
   private killPlayer(victim: SimPlayer, killer: SimPlayer | null): void {
@@ -528,6 +668,10 @@ export class MatchSim {
 
   private applyDamage(victim: SimPlayer, damage: number, killer: SimPlayer | null): void {
     let remaining = damage;
+    const resistance =
+      CHARACTERS[victim.characterId].passives.resistance *
+      (this.isAbilityActive(victim, 'resistencia') ? 0.5 : 1);
+    remaining *= resistance;
     if (victim.shield > 0) {
       const absorbed = Math.min(victim.shield, remaining);
       victim.shield -= absorbed;
@@ -540,13 +684,34 @@ export class MatchSim {
 
   private movePlayer(player: SimPlayer, dtMs: number): void {
     if (!player.alive || player.landing) return;
-    const speed = PLAYER_SPEED * (TICK_MS / 1000) * (dtMs / TICK_MS);
+    const passives = CHARACTERS[player.characterId].passives;
+    const moving = player.input.mx !== 0 || player.input.my !== 0;
+    player.prone = player.input.prone === true;
+    if (player.input.slide === true && moving && this.timeMs >= player.nextSlideMs && !player.prone) {
+      player.sliding = true;
+      player.slideEndsAtMs = this.timeMs + SLIDE_DURATION_MS;
+      player.nextSlideMs = this.timeMs + SLIDE_COOLDOWN_MS;
+    }
+    if (player.sliding && (this.timeMs >= player.slideEndsAtMs || !moving)) player.sliding = false;
+    const stanceMult = player.prone ? PRONE_SPEED_MULT : player.sliding ? SLIDE_BOOST_MULT : 1;
+    const speed =
+      PLAYER_SPEED *
+      passives.speedMult *
+      (this.isAbilityActive(player, 'sprint') ? 1.55 : 1) *
+      stanceMult *
+      (TICK_MS / 1000) *
+      (dtMs / TICK_MS);
     let nx = player.x + player.input.mx * speed;
     let ny = player.y + player.input.my * speed;
     nx = clamp(nx, -WORLD_RADIUS + PLAYER_RADIUS, WORLD_RADIUS - PLAYER_RADIUS);
     ny = clamp(ny, -WORLD_RADIUS + PLAYER_RADIUS, WORLD_RADIUS - PLAYER_RADIUS);
     for (const o of this.map.obstacles) {
       const resolved = resolveCircleRectCollision(nx, ny, o);
+      nx = resolved.x;
+      ny = resolved.y;
+    }
+    for (const wall of this.walls) {
+      const resolved = resolveCircleRectCollision(nx, ny, wall);
       nx = resolved.x;
       ny = resolved.y;
     }
@@ -571,9 +736,19 @@ export class MatchSim {
       }
 
       if (!hit) {
+        for (const wall of this.walls) {
+          if (segmentHitsRect(b.x, b.y, nx, ny, wall)) {
+            this.damageWall(wall, b.damage);
+            hit = true;
+            break;
+          }
+        }
+      }
+
+      if (!hit) {
         for (const p of this.players) {
           if (!p.alive || p.id === b.ownerId || p.landing) continue;
-          if (this.segmentHitsPlayer(b.x, b.y, nx, ny, p.x, p.y, PLAYER_RADIUS)) {
+          if (this.segmentHitsPlayer(b.x, b.y, nx, ny, p.x, p.y, this.effectiveRadius(p))) {
             const killer = this.players.find((k) => k.id === b.ownerId) ?? null;
             this.applyDamage(p, b.damage, killer);
             hit = true;
@@ -628,6 +803,13 @@ export class MatchSim {
     this.events = [];
     this.timeMs += dtMs;
     this.tickCount += 1;
+
+    if (this.walls.length > 0) {
+      this.walls = this.walls.filter((w) => w.expiresAtMs > this.timeMs && w.hp > 0);
+    }
+    for (const p of this.players) {
+      if (p.abilityEndsAtMs > 0 && this.timeMs >= p.abilityEndsAtMs) p.abilityEndsAtMs = -1;
+    }
 
     if (this.phase === 'drop') {
       const allChosen = this.players.every((p) => p.dropChoice !== null);

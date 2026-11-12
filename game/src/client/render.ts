@@ -1,6 +1,7 @@
 import type { GameMap } from '../shared/map.js';
 import type { SnapshotMsg, NetPlayer } from '../shared/protocol.js';
 import { WORLD_RADIUS, MAP_SIZE } from '../shared/constants.js';
+import { CHARACTERS } from '../shared/characters.js';
 import { ParticleSystem } from './effects.js';
 
 const RARITY_COLORS: Record<string, string> = {
@@ -18,6 +19,7 @@ export interface RenderState {
   renderTime: number;
   spectateId?: number;
   dtMs: number;
+  wings: boolean;
 }
 
 export class Renderer {
@@ -28,6 +30,8 @@ export class Renderer {
   private shakeMs = 0;
   private shakeIntensity = 0;
   private timeMs = 0;
+  private lastPositions = new Map<number, { x: number; y: number }>();
+  private moveSpeeds = new Map<number, number>();
 
   addShake(ms: number, intensity: number): void {
     this.shakeMs = Math.max(this.shakeMs, ms);
@@ -88,9 +92,11 @@ export class Renderer {
       (wy - camY) * zoom + canvas.height / 2,
     ];
 
+    this.trackMovement(snap, state.dtMs);
     this.drawGrid(camX, camY, zoom);
     this.drawZone(snap, camX, camY, zoom);
     this.drawMap(state.map, camX, camY, zoom);
+    this.drawWalls(snap, camX, camY, zoom);
     this.drawShadows(state.map, snap, camX, camY, zoom);
     this.drawItems(snap, camX, camY, zoom);
     this.drawGrenades(snap, camX, camY, zoom);
@@ -100,6 +106,41 @@ export class Renderer {
     this.drawPoiNames(state.map, camX, camY, zoom);
     this.drawVignette();
     this.drawMinimap(snap, state.map, state.yourId);
+  }
+
+  private trackMovement(snap: SnapshotMsg, dtMs: number): void {
+    const dtSec = Math.max(1, dtMs) / 1000;
+    for (const p of snap.players) {
+      const last = this.lastPositions.get(p.id);
+      if (last) {
+        this.moveSpeeds.set(p.id, Math.hypot(p.x - last.x, p.y - last.y) / dtSec);
+      } else {
+        this.moveSpeeds.set(p.id, 0);
+      }
+      this.lastPositions.set(p.id, { x: p.x, y: p.y });
+    }
+  }
+
+  private drawWalls(snap: SnapshotMsg, camX: number, camY: number, zoom: number): void {
+    const { ctx } = this;
+    for (const wall of snap.walls) {
+      const [sx, sy] = this.worldToScreen(camX, camY, zoom, wall.x, wall.y);
+      const wpx = wall.w * zoom;
+      const hpx = wall.h * zoom;
+      ctx.save();
+      ctx.shadowColor = '#7de8ff';
+      ctx.shadowBlur = 12 * this.dpr;
+      const gradient = ctx.createLinearGradient(sx, sy, sx + wpx, sy + hpx);
+      gradient.addColorStop(0, 'rgba(125, 232, 255, 0.85)');
+      gradient.addColorStop(0.5, 'rgba(56, 189, 248, 0.6)');
+      gradient.addColorStop(1, 'rgba(125, 232, 255, 0.85)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(sx, sy, wpx, hpx);
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(232, 247, 255, 0.9)';
+      ctx.lineWidth = 1.5 * this.dpr;
+      ctx.strokeRect(sx, sy, wpx, hpx);
+    }
   }
 
   private drawShadows(map: GameMap, snap: SnapshotMsg, camX: number, camY: number, zoom: number): void {
@@ -278,39 +319,156 @@ export class Renderer {
     for (const p of snap.players) {
       if (!p.alive) continue;
       const [sx, sy] = this.worldToScreen(camX, camY, zoom, p.x, p.y);
-      const r = 14 * zoom * this.dpr * 0.5;
+      const u = zoom * this.dpr;
       const isMe = p.id === state.yourId;
+      const speed = this.moveSpeeds.get(p.id) ?? 0;
+      const walkPhase = this.timeMs / 90 + p.id * 1.7;
+      const swing = Math.min(1, speed / 170) * Math.sin(walkPhase);
+      const charColor = CHARACTERS[p.characterId]?.color ?? '#38e1c8';
 
-      ctx.beginPath();
-      ctx.arc(sx, sy, r, 0, Math.PI * 2);
-      ctx.fillStyle = isMe ? '#38e1c8' : p.bot ? '#8ea0c0' : '#ef5b6b';
-      ctx.fill();
-      ctx.strokeStyle = p.shield > 0 ? '#38bdf8' : 'rgba(0,0,0,0.4)';
-      ctx.lineWidth = 2.5 * this.dpr;
-      ctx.stroke();
+      if (state.wings && !p.prone) {
+        this.drawWings(sx, sy, p, u);
+      }
 
-      ctx.strokeStyle = '#e8edf7';
-      ctx.lineWidth = 2 * this.dpr;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(sx + Math.cos(p.aim) * r * 1.7, sy + Math.sin(p.aim) * r * 1.7);
-      ctx.stroke();
+      this.drawHumanoid(sx, sy, p, u, swing, charColor, isMe);
 
-      if (p.hp < 100) {
-        const barW = r * 2.4;
+      const r = 14 * u * 0.5;
+      if (p.hp < 100 || p.shield > 0) {
+        const barW = r * 2.6;
+        const barY = sy - r - 12 * this.dpr;
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        ctx.fillRect(sx - barW / 2, sy - r - 10 * this.dpr, barW, 4 * this.dpr);
+        ctx.fillRect(sx - barW / 2, barY, barW, 5 * this.dpr);
         ctx.fillStyle = '#4ade80';
-        ctx.fillRect(sx - barW / 2, sy - r - 10 * this.dpr, (barW * p.hp) / 100, 4 * this.dpr);
+        ctx.fillRect(sx - barW / 2, barY, (barW * Math.max(0, p.hp)) / 100, 5 * this.dpr);
+        if (p.shield > 0) {
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(sx - barW / 2, barY - 3 * this.dpr, (barW * p.shield) / 100, 2.5 * this.dpr);
+        }
+      }
+
+      if (p.abilityActive) {
+        ctx.strokeStyle = charColor;
+        ctx.shadowColor = charColor;
+        ctx.shadowBlur = 10 * this.dpr;
+        ctx.lineWidth = 2 * this.dpr;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r * 1.5 + Math.sin(this.timeMs / 100) * 2 * this.dpr, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
       }
 
       if (isMe || !p.landing) {
         ctx.fillStyle = 'rgba(232, 237, 247, 0.9)';
         ctx.font = `${11 * this.dpr}px system-ui`;
         ctx.textAlign = 'center';
-        ctx.fillText(p.name, sx, sy - r - 14 * this.dpr);
+        ctx.fillText(p.name, sx, sy - r - 16 * this.dpr);
       }
     }
+  }
+
+  private drawWings(sx: number, sy: number, p: NetPlayer, u: number): void {
+    const { ctx } = this;
+    const flap = Math.sin(this.timeMs / 140 + p.id) * 0.35;
+    const wingLen = 20 * u;
+    const spread = 0.55 + flap;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(p.aim);
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(2 * u, -side * 3 * u);
+      ctx.quadraticCurveTo(
+        -wingLen * 0.6,
+        -side * wingLen * spread * 0.7,
+        -wingLen,
+        -side * wingLen * spread,
+      );
+      ctx.quadraticCurveTo(
+        -wingLen * 0.55,
+        -side * wingLen * spread * 0.45,
+        0,
+        -side * 1.5 * u,
+      );
+      ctx.closePath();
+      const gradient = ctx.createLinearGradient(0, 0, -wingLen, -side * wingLen);
+      gradient.addColorStop(0, 'rgba(232, 247, 255, 0.75)');
+      gradient.addColorStop(1, 'rgba(125, 232, 255, 0.25)');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(232, 247, 255, 0.55)';
+      ctx.lineWidth = 1 * this.dpr;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  private drawHumanoid(
+    sx: number,
+    sy: number,
+    p: NetPlayer,
+    u: number,
+    swing: number,
+    charColor: string,
+    isMe: boolean,
+  ): void {
+    const { ctx } = this;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(p.aim);
+
+    if (p.prone) {
+      ctx.scale(1.5, 0.55);
+    } else if (p.sliding) {
+      ctx.scale(1.25, 0.8);
+    }
+
+    const outline = isMe ? '#e8fff9' : p.bot ? 'rgba(0,0,0,0.55)' : '#3a1220';
+
+    ctx.strokeStyle = '#2b3550';
+    ctx.lineWidth = 3.4 * u;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-1 * u, -4.5 * u);
+    ctx.lineTo((-3 + swing * 3.5) * u, -5.5 * u);
+    ctx.moveTo(-1 * u, 4.5 * u);
+    ctx.lineTo((-3 - swing * 3.5) * u, 5.5 * u);
+    ctx.stroke();
+
+    ctx.fillStyle = charColor;
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = 1.4 * u;
+    ctx.beginPath();
+    ctx.ellipse(0.5 * u, 0, 6.5 * u, 5 * u, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = charColor;
+    ctx.lineWidth = 2.6 * u;
+    ctx.beginPath();
+    ctx.moveTo(2 * u, -4 * u);
+    ctx.lineTo(7.5 * u, -1.2 * u);
+    ctx.moveTo(2 * u, 4 * u);
+    ctx.lineTo(7.5 * u, 1.2 * u);
+    ctx.stroke();
+
+    ctx.fillStyle = '#1a2236';
+    ctx.fillRect(6.5 * u, -1.1 * u, 8 * u, 2.2 * u);
+    ctx.strokeStyle = '#0d1322';
+    ctx.lineWidth = 0.8 * u;
+    ctx.strokeRect(6.5 * u, -1.1 * u, 8 * u, 2.2 * u);
+
+    ctx.beginPath();
+    ctx.arc(1.5 * u, 0, 3.4 * u, 0, Math.PI * 2);
+    ctx.fillStyle = '#e8edf7';
+    ctx.fill();
+    ctx.strokeStyle = outline;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(2.6 * u, 0, 2.1 * u, 0, Math.PI * 2);
+    ctx.fillStyle = p.shield > 0 ? '#38bdf8' : charColor;
+    ctx.fill();
+
+    ctx.restore();
   }
 
   private drawMinimap(snap: SnapshotMsg, map: GameMap, yourId: number): void {

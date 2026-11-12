@@ -227,6 +227,19 @@ h3 { color: var(--muted); margin-top: 0.5rem; }
   border-radius: 8px;
 }
 
+#abilityInfo {
+  position: absolute;
+  bottom: 4.4rem;
+  right: 1rem;
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: rgba(10, 14, 23, 0.7);
+  padding: 0.25rem 0.8rem;
+  border-radius: 8px;
+}
+#abilityInfo.ready { color: var(--accent); border: 1px solid var(--accent); }
+
 #inventoryBar {
   position: absolute;
   bottom: 0.8rem;
@@ -314,3 +327,5 @@ h3 { color: var(--muted); margin-top: 0.5rem; }
   font-size: 0.72rem;
 }
 .tbtn.fire { background: rgba(239, 91, 107, 0.35); width: 78px; height: 78px; }
+.tbtn.ability { background: rgba(56, 225, 200, 0.25); }
+.tbtn.active { background: rgba(56, 225, 200, 0.45); }

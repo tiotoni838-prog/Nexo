@@ -1,4 +1,5 @@
 import { PROTOCOL_VERSION, TICK_MS } from '../shared/constants.js';
+import type { CharacterId } from '../shared/characters.js';
 import type { ClientMsg, ServerMsg, SnapshotMsg, WelcomeMsg } from '../shared/protocol.js';
 
 export interface NetHandlers {
@@ -57,13 +58,13 @@ export class ClientNet {
     this.transport = transport;
   }
 
-  sendHello(name: string, lang: 'es' | 'en'): void {
-    this.transport.send({ t: 'hello', protocol: PROTOCOL_VERSION, name, lang });
+  sendHello(name: string, lang: 'es' | 'en', characterId?: CharacterId): void {
+    this.transport.send({ t: 'hello', protocol: PROTOCOL_VERSION, name, lang, characterId });
   }
 
-  sendInput(mx: number, my: number, aim: number, fire: boolean): void {
+  sendInput(mx: number, my: number, aim: number, fire: boolean, slide = false, prone = false): void {
     this.inputSeq += 1;
-    this.transport.send({ t: 'input', seq: this.inputSeq, mx, my, aim, fire });
+    this.transport.send({ t: 'input', seq: this.inputSeq, mx, my, aim, fire, slide, prone });
   }
 
   sendAction(action: Extract<ClientMsg, { t: 'action' }>): void {

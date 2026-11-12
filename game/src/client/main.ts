@@ -6,6 +6,7 @@ import { Sfx } from './audio.js';
 import { loadSettings, saveSettings, applySettingsToDom, applyI18n, keyLabel, type Settings } from './settings.js';
 import { t } from '../shared/i18n.js';
 import { WEAPONS } from '../shared/weapons.js';
+import { CHARACTERS, CHARACTER_IDS, type CharacterId } from '../shared/characters.js';
 import type { ClientMsg, ServerMsg, SnapshotMsg, WelcomeMsg } from '../shared/protocol.js';
 
 type Mode = 'menu' | 'solo' | 'ws' | 'p2p-host' | 'p2p-guest';
@@ -27,6 +28,9 @@ let gameMap: WelcomeMsg['map'] | null = null;
 let prevPositions = new Map<number, { x: number; y: number }>();
 let mouseAim = 0;
 let firing = false;
+let slideQueued = false;
+let proneToggle = false;
+let selectedCharacter: CharacterId = 'aurora';
 let killFeedTimers: number[] = [];
 
 const renderer = new Renderer($('canvas') as HTMLCanvasElement);
@@ -44,7 +48,7 @@ const ensureNet = (transport: Transport): ClientNet => {
     onWelcome: (msg: WelcomeMsg) => {
       yourId = msg.yourId;
       gameMap = msg.map;
-      transport.send({ t: 'hello', protocol: 1, name: settings.lang === 'en' ? playerName() : playerName(), lang: settings.lang });
+      transport.send({ t: 'hello', protocol: 2, name: playerName(), lang: settings.lang, characterId: selectedCharacter });
     },
     onSnapshot: (msg: SnapshotMsg) => {
       for (const p of msg.players) {
@@ -120,7 +124,7 @@ const startSolo = (): void => {
   mode = 'solo';
   localServer = startLocalServer(11, false);
   net = ensureNet(new LocalTransport(localServer, 1));
-  net.sendHello(playerName(), settings.lang);
+  net.sendHello(playerName(), settings.lang, selectedCharacter);
   showScreen('game');
   renderer.resize();
 };
@@ -154,7 +158,7 @@ const startWs = async (): Promise<void> => {
     return;
   }
   net = new ClientNet(transport);
-  net.sendHello(playerName(), settings.lang);
+  net.sendHello(playerName(), settings.lang, selectedCharacter);
   showScreen('game');
   renderer.resize();
 };
@@ -166,7 +170,7 @@ const startP2pHost = async (): Promise<void> => {
   mode = 'p2p-host';
   localServer = startLocalServer(0, true);
   net = ensureNet(new LocalTransport(localServer, 1));
-  net.sendHello(playerName(), settings.lang);
+  net.sendHello(playerName(), settings.lang, selectedCharacter);
   showScreen('game');
   renderer.resize();
   const offer = await p2pHost.createOffer();
@@ -188,7 +192,7 @@ const startP2pGuest = async (): Promise<void> => {
     $input('answerOut').value = answer;
     showScreen('game');
     renderer.resize();
-    net.sendHello(playerName(), settings.lang);
+    net.sendHello(playerName(), settings.lang, selectedCharacter);
     banner('P2P: espera a que el anfitrión acepte tu respuesta');
   } catch {
     banner('Código de invitación inválido / Invalid invite code');
@@ -246,6 +250,16 @@ const handleServerMsg = (msg: ServerMsg): void => {
       }
       if (msg.kind === 'shot' && msg.playerId !== yourId) subtitle('Disparo cercano / Nearby shot');
       if (msg.kind === 'pickup' && msg.playerId === yourId) subtitle('Objeto recogido / Item picked up');
+      if (msg.kind === 'ability') {
+        const label = msg.abilityId ? ABILITY_LABELS[msg.abilityId] : undefined;
+        const abilityName = label ? label[settings.lang] : t('ability', settings.lang);
+        const who = msg.playerId === yourId ? '' : `${whoName(msg.playerId)}: `;
+        subtitle(`${who}${abilityName}`);
+        if (msg.abilityId === 'muro' && typeof msg.x === 'number' && typeof msg.y === 'number') {
+          renderer.particles.ring(msg.x, msg.y, 60, 420, 'rgba(125, 232, 255, 0.9)');
+        }
+        if (msg.playerId === yourId) sfx.pickup();
+      }
       break;
     case 'result': {
       const panel = $('resultPanel');
@@ -273,6 +287,13 @@ const handleServerMsg = (msg: ServerMsg): void => {
       break;
   }
 };
+
+const whoName = (playerId?: number): string =>
+  latestSnapshot?.players.find((p) => p.id === playerId)?.name ?? '?';
+
+const ABILITY_LABELS: Record<string, { es: string; en: string }> = Object.fromEntries(
+  CHARACTER_IDS.map((id) => [CHARACTERS[id].ability.id, { es: CHARACTERS[id].ability.nameEs, en: CHARACTERS[id].ability.nameEn }]),
+);
 
 const fmtTime = (ms: number): string => {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -302,6 +323,15 @@ const updateHud = (snap: SnapshotMsg): void => {
     const weapon = aliveSelf.weapons[aliveSelf.activeSlot];
     const weaponName = weapon ? WEAPONS[weapon.weaponId][settings.lang === 'en' ? 'nameEn' : 'nameEs'] : '—';
     $('weaponInfo').textContent = `${weaponName} · ${aliveSelf.mag}/${aliveSelf.ammo}${aliveSelf.reloading ? ' ⟳' : ''}`;
+
+    const abilityEl = $('abilityInfo');
+    const charDef = CHARACTERS[aliveSelf.characterId];
+    if (charDef) {
+      const abilityName = charDef.ability[settings.lang === 'en' ? 'nameEn' : 'nameEs'];
+      const cd = aliveSelf.abilityCooldownMs;
+      abilityEl.textContent = cd > 0 ? `${abilityName}: ${fmtTime(cd)}` : `${abilityName} ✓`;
+      abilityEl.classList.toggle('ready', cd === 0);
+    }
 
     const inv = $('inventoryBar');
     inv.innerHTML = '';
@@ -349,6 +379,8 @@ window.addEventListener('keydown', (ev) => {
   if (ev.code === keyFor('shieldItem')) net?.sendAction({ t: 'action', kind: 'use', consumable: 'escudo' });
   if (ev.code === keyFor('swap')) net?.sendAction({ t: 'action', kind: 'swap', slot: latestSnapshot?.you ? 1 - latestSnapshot.you.activeSlot : 0 });
   if (ev.code === keyFor('grenade')) net?.sendAction({ t: 'action', kind: 'throwGrenade' });
+  if (ev.code === keyFor('ability')) net?.sendAction({ t: 'action', kind: 'ability' });
+  if (ev.code === keyFor('slide')) slideQueued = true;
   if (ev.code === keyFor('reload')) sfx.reload();
 });
 
@@ -469,6 +501,29 @@ bindTouchButton('btnSwap', () =>
   net?.sendAction({ t: 'action', kind: 'swap', slot: latestSnapshot?.you ? 1 - latestSnapshot.you.activeSlot : 0 }),
 );
 bindTouchButton('btnGrenade', () => net?.sendAction({ t: 'action', kind: 'throwGrenade' }));
+bindTouchButton('btnAbility', () => net?.sendAction({ t: 'action', kind: 'ability' }));
+const labelTouchButtons = (): void => {
+  const labels: Array<[string, string]> = [
+    ['btnPickup', t('pickup', settings.lang)],
+    ['btnReload', t('reload', settings.lang)],
+    ['btnHeal', '＋'],
+    ['btnShield', '◈'],
+    ['btnSwap', '⇄'],
+    ['btnGrenade', '◉'],
+    ['btnAbility', '⚡'],
+    ['btnSlide', t('slide', settings.lang)],
+    ['btnProne', t('prone', settings.lang)],
+  ];
+  for (const [id, label] of labels) $(id).textContent = label;
+};
+labelTouchButtons();
+bindTouchButton('btnSlide', () => {
+  slideQueued = true;
+});
+bindTouchButton('btnProne', () => {
+  proneToggle = !proneToggle;
+  $('btnProne').classList.toggle('active', proneToggle);
+});
 
 let lastInputSent = 0;
 const sendInputLoop = (): void => {
@@ -486,7 +541,9 @@ const sendInputLoop = (): void => {
       mx = joyVec.x;
       my = joyVec.y;
     }
-    net.sendInput(mx, my, mouseAim, firing);
+    const prone = keysDown.has(keyFor('prone')) || proneToggle;
+    net.sendInput(mx, my, mouseAim, firing, slideQueued, prone);
+    slideQueued = false;
   }
   requestAnimationFrame(sendInputLoop);
 };
@@ -508,6 +565,7 @@ const renderLoop = (): void => {
     renderTime: now,
     spectateId,
     dtMs: dt,
+    wings: settings.wings,
   });
   requestAnimationFrame(renderLoop);
 };
@@ -550,6 +608,24 @@ $('selLang').addEventListener('change', () => {
   applyI18n(settings);
   saveSettings(settings);
 });
+const selCharacter = $<HTMLSelectElement>('selCharacter');
+for (const id of CHARACTER_IDS) {
+  const opt = document.createElement('option');
+  opt.value = id;
+  opt.textContent = t(`char_${id}`, settings.lang);
+  selCharacter.appendChild(opt);
+}
+selCharacter.value = selectedCharacter;
+selCharacter.addEventListener('change', () => {
+  selectedCharacter = selCharacter.value as CharacterId;
+  saveSettings({ ...settings });
+});
+const chkWings = $<HTMLInputElement>('chkWings');
+chkWings.checked = settings.wings;
+chkWings.addEventListener('change', () => {
+  settings.wings = chkWings.checked;
+  saveSettings(settings);
+});
 $input('rngSens').value = String(settings.sensitivity);
 $('sensVal').textContent = settings.sensitivity.toFixed(1);
 $('rngSens').addEventListener('input', () => {
@@ -575,7 +651,7 @@ $('chkSubs').addEventListener('change', () => {
   saveSettings(settings);
 });
 
-const KEYBIND_ACTIONS = ['forward', 'back', 'left', 'right', 'reload', 'pickup', 'heal', 'shieldItem', 'swap', 'grenade'] as const;
+const KEYBIND_ACTIONS = ['forward', 'back', 'left', 'right', 'reload', 'pickup', 'heal', 'shieldItem', 'swap', 'grenade', 'ability', 'slide', 'prone'] as const;
 
 const renderKeybinds = (): void => {
   const list = $('keybindList');

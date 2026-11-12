@@ -1,5 +1,6 @@
 import { MAX_INPUT_RATE_PER_SEC } from './constants.js';
 import type { ClientMsg } from './protocol.js';
+import { isCharacterId } from './characters.js';
 
 export interface RateLimiterState {
   windowStart: number;
@@ -40,7 +41,8 @@ export const validateClientMsg = (raw: unknown): ClientMsg | null => {
       if (typeof msg.name !== 'string') return null;
       if (msg.name.length === 0 || msg.name.length > 16) return null;
       if (!isFiniteNumber(msg.protocol)) return null;
-      return { t: 'hello', protocol: msg.protocol, name: msg.name };
+      const characterId = isCharacterId(msg.characterId) ? msg.characterId : undefined;
+      return { t: 'hello', protocol: msg.protocol, name: msg.name, characterId };
     }
     case 'input': {
       if (!isFiniteNumber(msg.mx) || !isFiniteNumber(msg.my) || !isFiniteNumber(msg.aim)) return null;
@@ -54,10 +56,12 @@ export const validateClientMsg = (raw: unknown): ClientMsg | null => {
         my: Math.max(-1, Math.min(1, msg.my)),
         aim: msg.aim,
         fire: msg.fire === true,
+        slide: msg.slide === true,
+        prone: msg.prone === true,
       };
     }
     case 'action': {
-      const kinds = ['pickup', 'reload', 'use', 'swap', 'dropWeapon', 'throwGrenade'];
+      const kinds = ['pickup', 'reload', 'use', 'swap', 'dropWeapon', 'throwGrenade', 'ability'];
       if (typeof msg.kind !== 'string' || !kinds.includes(msg.kind)) return null;
       if (msg.kind === 'use' && msg.consumable !== 'botiquin' && msg.consumable !== 'escudo') return null;
       if (msg.kind === 'swap' && msg.slot !== 0 && msg.slot !== 1) return null;

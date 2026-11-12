@@ -21,6 +21,17 @@ trabajo) y el **vertical slice jugable** en `game/`.
 - **Modo "mi dispositivo es el servidor"** (requisito del propietario): el anfitrión
   ejecuta la MISMA simulación autoritativa en su dispositivo y los invitados se conectan
   por WebRTC con STUN (`game/src/client/p2p.ts`). Incluye además servidor dedicado Node.
+- **Personajes con cuerpo y habilidades** (nivel 3): 6 personajes (Aurora, Sombra,
+  Titán, Halcón, Vita, Vulcano) con 1 habilidad activa + pasivas estilo los grandes
+  del género pero 100% originales: **Muro de Cuarzo** (cobertura desplegable que
+  bloquea balas y granadas), Sprint Sombra, Piel de Titán, Recarga Táctica, Pulso
+  Sanador y Sobrecarga. Movimiento avanzado: **deslizarse** (impulso con cooldown)
+  y **cuerpo a tierra** (menos velocidad, perfil más pequeño). En el cliente web los
+  jugadores se dibujan como **humanoides articulados** (torso, cabeza, brazos,
+  piernas con ciclo de caminata, arma en manos) con **alas cosméticas** opcionales.
+- **Proyecto Godot 4.3 real** (`godot/`): cliente 3D con personajes humanoides con
+  cuerpo completo, mapa con edificios y árboles, zona dinámica y lógica pura
+  determinista portada a GDScript, verificada headless (29/29 checks).
 - **Tienda PayPal solo server-side** (`game/src/paypal/`): catálogo 100% cosmético,
   OAuth client-credentials, create/capture order con idempotencia. Las credenciales se
   leen de variables de entorno (`PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`) — nunca en
@@ -39,6 +50,9 @@ npm run client       # sirve el cliente en http://localhost:8080
 
 # Pruebas
 npm test
+
+# Proyecto Godot 4 (verificación headless de lógica 3D)
+godot --headless --path ../godot --script res://tests/logic_tests.gd
 ```
 
 En el menú del juego: **Entrenamiento** (partida local con bots, sin red), **Crear

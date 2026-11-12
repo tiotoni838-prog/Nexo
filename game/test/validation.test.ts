@@ -19,7 +19,7 @@ describe('validación de mensajes', () => {
     expect(validateClientMsg({ t: 'input', mx: 'x', my: 0, aim: 0, seq: 1 })).toBeNull();
     expect(validateClientMsg({ t: 'input', mx: 5, my: 0, aim: 0, seq: 1 })).toBeNull();
     const ok = validateClientMsg({ t: 'input', mx: 0.7, my: 0.7, aim: 3, fire: true, seq: 2 });
-    expect(ok).toEqual({ t: 'input', seq: 2, mx: 0.7, my: 0.7, aim: 3, fire: true });
+    expect(ok).toEqual({ t: 'input', seq: 2, mx: 0.7, my: 0.7, aim: 3, fire: true, slide: false, prone: false });
   });
 
   it('rechaza acciones desconocidas y consumibles inventados', () => {

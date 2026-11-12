@@ -4,7 +4,7 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 
 | Requisito (spec maestra / dominio) | Código | Pruebas | Evidencia |
 |---|---|---|---|
-| Servidor autoritativo; el cliente nunca decide resultados (08/09) | `game/src/shared/sim.ts` (todo el daño/loot/fases en servidor), `game/src/server/gameServer.ts` | `test/gameServer.test.ts` (input fuera de rango se satura; resultado autoritativo) | `npm test` 30/30 ✓ |
+| Servidor autoritativo; el cliente nunca decide resultados (08/09) | `game/src/shared/sim.ts` (todo el daño/loot/fases en servidor), `game/src/server/gameServer.ts` | `test/gameServer.test.ts` (input fuera de rango se satura; resultado autoritativo) | `npm test` 46/46 ✓ (antes 30/30; suite ampliada) |
 | Validación de entradas y límites anti-abuso (09) | `game/src/shared/validation.ts`, rate limiter en `gameServer.ts` | `test/validation.test.ts` | ídem |
 | Versionado de protocolo / compatibilidad (08) | `PROTOCOL_VERSION`, rechazo en `gameServer.handleMessage` | `test/gameServer.test.ts` «versiones incompatibles» | ídem |
 | Zona dinámica y legible (02) | `game/src/shared/zone.ts` (5 fases, DPS creciente), render de círculo + objetivo punteado + temporizador HUD | `test/sim.test.ts` «zona se encoge», «daño de zona» | ídem |
@@ -30,6 +30,12 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 | Audio accesible con subtítulos (14, 13) | `client/audio.ts` (SFX sintetizados WebAudio, sin assets), cada cue tiene subtítulo | manual | — |
 | Presentación de alto nivel (petición del propietario) | `client/effects.ts` (partículas, anillos de explosión), sombras, viñeta, screen shake, tracers con glow, nombres de POI (`client/render.ts`) | manual | — |
 | Espectador con cambio de objetivo (02) | clic para ciclar jugadores vivos (`client/main.ts`) | manual | — |
+
+| Personajes con habilidades activas + pasivas (petición: "personajes bien hechos") | `shared/characters.ts` (6 personajes), `sim.useAbility`, bots usan habilidades | `test/abilities.test.ts` (12 tests) | `npm test` 46/46 ✓ |
+| Cobertura desplegable que bloquea balas/granadas (original, estilo Gloo Wall) | `sim.deployCoverWall` (Muro de Cuarzo), colisión de balas/jugadores/granadas con muros | `test/abilities.test.ts` «Muro de Cuarzo bloquea y expira» | ídem |
+| Movimiento avanzado: slide y prone (estilo Free Fire, original) | `sim.movePlayer` (SLIDE_BOOST, PRONE_SPEED), `effectiveRadius` | `test/abilities.test.ts` «slide», «prone» | ídem |
+| Personajes con cuerpo, no "pastillas" (petición explícita) | `client/render.ts` `drawHumanoid` (torso, cabeza, brazos, piernas, arma, ciclo de caminata) + alas cosméticas | manual (visual) | — |
+| Motor Godot 4 (fase 3-6 de ROADMAP) | `godot/` proyecto completo 4.3: lógica pura GDScript + escena 3D con humanoides | `godot/tests/logic_tests.gd` 29/29 ✓ headless (Godot 4.3 stable `77dcf97d8`) | `godot/README.md` |
 
 ## Bloqueos registrados
 

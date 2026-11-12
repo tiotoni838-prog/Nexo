@@ -15,6 +15,8 @@
       <div class="menu-card">
         <label for="playerName" data-i18n="name"></label>
         <input id="playerName" maxlength="16" value="Jugador" autocomplete="off" />
+        <label for="selCharacter" data-i18n="character"></label>
+        <select id="selCharacter"></select>
         <div class="btn-col">
           <button id="btnSolo" class="btn primary" data-i18n="playSolo"></button>
           <button id="btnHost" class="btn" data-i18n="hostOnline"></button>
@@ -72,6 +74,10 @@
           <label for="chkSubs" data-i18n="subtitles"></label>
           <input type="checkbox" id="chkSubs" checked />
         </div>
+        <div class="row">
+          <label for="chkWings" data-i18n="wings"></label>
+          <input type="checkbox" id="chkWings" checked />
+        </div>
         <h3 data-i18n="keybinds"></h3>
         <div id="keybindList" class="keybind-list"></div>
         <button id="btnBackSettings" class="btn" data-i18n="backToMenu"></button>
@@ -94,6 +100,7 @@
           <div class="bar"><div id="shieldBar" class="fill shield"></div><span id="shieldText"></span></div>
         </div>
         <div id="weaponInfo"></div>
+        <div id="abilityInfo"></div>
         <div id="inventoryBar"></div>
         <div id="banner" class="hidden"></div>
         <div id="resultPanel" class="hidden"></div>
@@ -107,6 +114,9 @@
             <button id="btnShield" class="tbtn"></button>
             <button id="btnSwap" class="tbtn"></button>
             <button id="btnGrenade" class="tbtn"></button>
+            <button id="btnAbility" class="tbtn ability"></button>
+            <button id="btnSlide" class="tbtn"></button>
+            <button id="btnProne" class="tbtn"></button>
           </div>
         </div>
       </div>

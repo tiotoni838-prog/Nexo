@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import http from 'node:http';
 import { GameServer, type Connection } from './gameServer.js';
-import { TICK_MS } from '../shared/constants.js';
+import { TICK_MS, PROTOCOL_VERSION } from '../shared/constants.js';
 import { StoreService, mountStoreRoutes } from '../paypal/storeRoutes.js';
 
 const PORT = Number(process.env.NEXO_PORT ?? 7777);
@@ -61,7 +61,7 @@ const healthServer = http.createServer((req, res) => {
     res.end(
       JSON.stringify({
         status: 'ok',
-        protocol: 1,
+        protocol: PROTOCOL_VERSION,
         phase: gameServer.sim.phase,
         alive: gameServer.sim.aliveCount(),
         uptimeSec: Math.round(process.uptime()),

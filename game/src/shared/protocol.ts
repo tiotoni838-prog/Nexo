@@ -1,14 +1,18 @@
 import { PROTOCOL_VERSION } from './constants.js';
 import type { Rarity } from './constants.js';
 import type { WeaponId, ConsumableId } from './weapons.js';
+import type { CharacterId, AbilityId } from './characters.js';
 import type { GameMap } from './map.js';
 import type { ZoneState } from './zone.js';
+
+export type Stance = 'stand' | 'prone';
 
 export interface HelloMsg {
   t: 'hello';
   protocol: number;
   name: string;
   lang?: 'es' | 'en';
+  characterId?: CharacterId;
 }
 
 export interface InputMsg {
@@ -18,11 +22,13 @@ export interface InputMsg {
   my: number;
   aim: number;
   fire: boolean;
+  slide?: boolean;
+  prone?: boolean;
 }
 
 export interface ActionMsg {
   t: 'action';
-  kind: 'pickup' | 'reload' | 'use' | 'swap' | 'dropWeapon' | 'throwGrenade';
+  kind: 'pickup' | 'reload' | 'use' | 'swap' | 'dropWeapon' | 'throwGrenade' | 'ability';
   slot?: number;
   consumable?: ConsumableId;
 }
@@ -56,6 +62,19 @@ export interface NetPlayer {
   firing: boolean;
   reloading: boolean;
   landing: boolean;
+  characterId: CharacterId;
+  prone: boolean;
+  sliding: boolean;
+  abilityActive: boolean;
+}
+
+export interface NetWall {
+  id: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  hp: number;
 }
 
 export interface NetGrenade {
@@ -98,7 +117,8 @@ export interface SnapshotMsg {
   bullets: NetBullet[];
   grenades: NetGrenade[];
   items: NetItem[];
-  you: { hp: number; shield: number; ammo: number; mag: number; botiquines: number; escudos: number; grenades: number; activeSlot: number; weapons: Array<{ weaponId: WeaponId; rarity: Rarity; ammoInMag: number } | null>; reloading: boolean } | null;
+  walls: NetWall[];
+  you: { hp: number; shield: number; ammo: number; mag: number; botiquines: number; escudos: number; grenades: number; activeSlot: number; weapons: Array<{ weaponId: WeaponId; rarity: Rarity; ammoInMag: number } | null>; reloading: boolean; characterId: CharacterId; abilityCooldownMs: number; prone: boolean } | null;
 }
 
 export interface WelcomeMsg {
@@ -121,7 +141,8 @@ export interface PhaseMsg {
 
 export interface EventMsg {
   t: 'event';
-  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone' | 'explosion' | 'airdrop';
+  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone' | 'explosion' | 'airdrop' | 'ability';
+  abilityId?: AbilityId;
   killerId?: number;
   killerName?: string;
   victimId?: number;

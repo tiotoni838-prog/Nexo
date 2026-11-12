@@ -40,7 +40,7 @@ interface ClientState {
   joined: boolean;
 }
 
-const toNetPlayer = (p: SimPlayer): NetPlayer => {
+const toNetPlayer = (p: SimPlayer, nowMs = 0): NetPlayer => {
   const weapon = p.inventory.weapons[p.inventory.activeWeapon];
   return {
     id: p.id,
@@ -56,8 +56,12 @@ const toNetPlayer = (p: SimPlayer): NetPlayer => {
     weaponId: weapon?.weaponId ?? null,
     rarity: weapon?.rarity ?? null,
     firing: p.firing,
-    reloading: p.reloadEndMs > 0,
+    reloading: p.reloadEndMs > nowMs,
     landing: p.landing,
+    characterId: p.characterId,
+    prone: p.prone,
+    sliding: p.sliding,
+    abilityActive: p.abilityEndsAtMs > nowMs,
   };
 };
 
@@ -162,7 +166,7 @@ export class GameServer {
           return;
         }
         client.name = sanitizeName(msg.name);
-        const player = this.sim.addPlayer(client.name, false);
+        const player = this.sim.addPlayer(client.name, false, msg.characterId);
         client.playerId = player.id;
         client.joined = true;
         client.connection.send({
@@ -186,6 +190,8 @@ export class GameServer {
           aim: msg.aim,
           fire: msg.fire,
           seq: msg.seq,
+          slide: msg.slide === true,
+          prone: msg.prone === true,
         });
         return;
       }
@@ -210,6 +216,9 @@ export class GameServer {
             break;
           case 'throwGrenade':
             this.sim.throwGrenade(pid);
+            break;
+          case 'ability':
+            this.sim.useAbility(pid);
             break;
         }
         return;
@@ -276,6 +285,7 @@ export class GameServer {
             strafeDir: Math.random() < 0.5 ? -1 : 1,
             reactionDelayMs: 120 + Math.random() * 260,
             grenadeReadyMs: 0,
+            abilityReadyMs: 0,
           };
           this.botBrains.set(player.id, brain);
         }
@@ -309,7 +319,7 @@ export class GameServer {
         tr: Math.round(this.sim.zone.targetRadius),
       },
       alive: this.sim.aliveCount(),
-      players: this.sim.players.map(toNetPlayer),
+      players: this.sim.players.map((p) => toNetPlayer(p, this.sim.timeMs)),
       bullets: this.sim.bullets.map((b) => ({
         id: b.id,
         x: Math.round(b.x),
@@ -324,6 +334,14 @@ export class GameServer {
         y: Math.round(g.y),
       })),
       items: toNetItems(this.sim),
+      walls: this.sim.walls.map((w) => ({
+        id: w.id,
+        x: Math.round(w.x),
+        y: Math.round(w.y),
+        w: Math.round(w.w),
+        h: Math.round(w.h),
+        hp: Math.round(w.hp),
+      })),
     };
 
     for (const client of this.clients.values()) {
@@ -341,6 +359,12 @@ export class GameServer {
             activeSlot: p.inventory.activeWeapon,
             weapons: p.inventory.weapons,
             reloading: p.reloadEndMs > this.sim.timeMs,
+            characterId: p.characterId,
+            abilityCooldownMs:
+              p.abilityReadyMs > this.sim.timeMs
+                ? Math.round(p.abilityReadyMs - this.sim.timeMs)
+                : 0,
+            prone: p.prone,
           }
         : null;
       client.connection.send({ ...base, you } as SnapshotMsg);
