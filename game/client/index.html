@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>NEXO: FRONTIER</title>
+  <link rel="stylesheet" href="/client/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Menú principal -->
+    <section id="menu" class="screen">
+      <h1 class="logo">NEXO<span>: FRONTIER</span></h1>
+      <p id="subtitle" class="subtitle"></p>
+      <div class="menu-card">
+        <label for="playerName" data-i18n="name"></label>
+        <input id="playerName" maxlength="16" value="Jugador" autocomplete="off" />
+        <div class="btn-col">
+          <button id="btnSolo" class="btn primary" data-i18n="playSolo"></button>
+          <button id="btnHost" class="btn" data-i18n="hostOnline"></button>
+          <button id="btnJoin" class="btn" data-i18n="joinOnline"></button>
+        </div>
+        <div id="joinRow" class="row hidden">
+          <input id="serverAddr" value="ws://localhost:7777" />
+          <button id="btnConnect" class="btn" data-i18n="connect"></button>
+        </div>
+        <div id="p2pHostPanel" class="panel hidden">
+          <p data-i18n="p2pHelp"></p>
+          <button id="btnCreateOffer" class="btn" data-i18n="createOffer"></button>
+          <textarea id="offerOut" readonly placeholder=""></textarea>
+          <button id="btnCopyOffer" class="btn small" data-i18n="copy"></button>
+          <textarea id="answerIn" placeholder=""></textarea>
+          <button id="btnAcceptAnswer" class="btn" data-i18n="acceptAnswer"></button>
+        </div>
+        <div id="p2pJoinPanel" class="panel hidden">
+          <p data-i18n="p2pHelp"></p>
+          <textarea id="offerIn" placeholder=""></textarea>
+          <button id="btnJoinP2p" class="btn" data-i18n="joinP2p"></button>
+          <textarea id="answerOut" readonly></textarea>
+          <button id="btnCopyAnswer" class="btn small" data-i18n="copy"></button>
+        </div>
+        <button id="btnSettings" class="btn small" data-i18n="settings"></button>
+      </div>
+      <p class="footnote">Servidor autoritativo · Cosméticos únicamente · Sin pay-to-win</p>
+    </section>
+
+    <!-- Ajustes -->
+    <section id="settings" class="screen hidden">
+      <h2 data-i18n="settings"></h2>
+      <div class="menu-card">
+        <div class="row">
+          <label for="selLang" data-i18n="language"></label>
+          <select id="selLang">
+            <option value="es">Español</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="rngSens" data-i18n="sensitivity"></label>
+          <input type="range" id="rngSens" min="0.3" max="3" step="0.1" value="1" />
+          <span id="sensVal">1.0</span>
+        </div>
+        <div class="row">
+          <label for="rngText" data-i18n="textScale"></label>
+          <input type="range" id="rngText" min="0.8" max="1.6" step="0.1" value="1" />
+        </div>
+        <div class="row">
+          <label for="chkContrast" data-i18n="highContrast"></label>
+          <input type="checkbox" id="chkContrast" />
+        </div>
+        <div class="row">
+          <label for="chkSubs" data-i18n="subtitles"></label>
+          <input type="checkbox" id="chkSubs" checked />
+        </div>
+        <h3 data-i18n="keybinds"></h3>
+        <div id="keybindList" class="keybind-list"></div>
+        <button id="btnBackSettings" class="btn" data-i18n="backToMenu"></button>
+      </div>
+    </section>
+
+    <!-- Juego -->
+    <section id="game" class="screen hidden">
+      <canvas id="canvas"></canvas>
+      <div id="hud">
+        <div id="topbar">
+          <span id="aliveCount"></span>
+          <span id="zoneTimer"></span>
+          <span id="ping"></span>
+        </div>
+        <div id="killfeed"></div>
+        <div id="subtitleBar" class="hidden"></div>
+        <div id="vitals">
+          <div class="bar"><div id="hpBar" class="fill hp"></div><span id="hpText"></span></div>
+          <div class="bar"><div id="shieldBar" class="fill shield"></div><span id="shieldText"></span></div>
+        </div>
+        <div id="weaponInfo"></div>
+        <div id="inventoryBar"></div>
+        <div id="banner" class="hidden"></div>
+        <div id="resultPanel" class="hidden"></div>
+        <div id="touchControls" class="hidden">
+          <div id="joyBase"><div id="joyStick"></div></div>
+          <div class="touch-buttons">
+            <button id="btnFire" class="tbtn fire"></button>
+            <button id="btnPickup" class="tbtn"></button>
+            <button id="btnReload" class="tbtn"></button>
+            <button id="btnHeal" class="tbtn"></button>
+            <button id="btnShield" class="tbtn"></button>
+            <button id="btnSwap" class="tbtn"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script type="module" src="/dist/client/main.js"></script>
+</body>
+</html>

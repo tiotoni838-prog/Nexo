@@ -1,0 +1,588 @@
+import {
+  MAX_HP,
+  MAX_SHIELD,
+  PICKUP_RADIUS,
+  PLAYER_RADIUS,
+  PLAYER_SPEED,
+  TICK_MS,
+  WORLD_RADIUS,
+  clamp,
+  dist,
+  type Vec2,
+} from './constants.js';
+import { Rng } from './rng.js';
+import {
+  generateMap,
+  circleHitsObstacle,
+  segmentHitsRect,
+  type GameMap,
+  type Rect,
+} from './map.js';
+import {
+  emptyInventory,
+  resetItemIds,
+  spawnLootAt,
+  type GroundItem,
+  type Inventory,
+} from './loot.js';
+import { RARITY_DAMAGE_MULT, WEAPONS, type WeaponId, type ConsumableId } from './weapons.js';
+import { initialZone, isOutsideZone, updateZone, zoneDps, type ZoneState } from './zone.js';
+import { sanitizeName } from './validation.js';
+
+export type MatchPhase = 'lobby' | 'drop' | 'play' | 'over';
+
+export interface PlayerInput {
+  mx: number;
+  my: number;
+  aim: number;
+  fire: boolean;
+  seq: number;
+}
+
+export interface SimPlayer {
+  id: number;
+  name: string;
+  bot: boolean;
+  x: number;
+  y: number;
+  aim: number;
+  hp: number;
+  shield: number;
+  alive: boolean;
+  kills: number;
+  inventory: Inventory;
+  input: PlayerInput;
+  lastFireMs: number;
+  reloadEndMs: number;
+  firing: boolean;
+  landing: boolean;
+  dropChoice: Vec2 | null;
+  placement: number;
+}
+
+export interface Bullet {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  ownerId: number;
+  damage: number;
+  traveled: number;
+  range: number;
+}
+
+export interface SimEvent {
+  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone';
+  killerId?: number;
+  killerName?: string;
+  victimId?: number;
+  victimName?: string;
+  weaponId?: WeaponId;
+  x?: number;
+  y?: number;
+  playerId?: number;
+  itemName?: string;
+}
+
+export interface MatchConfig {
+  seed: number;
+  botCount: number;
+  dropPhaseMs: number;
+}
+
+const BOT_NAMES_ES = [
+  'Vega', 'Orion', 'Lyra', 'Atlas', 'Nova', 'Ciro', 'Mira', 'Deneb', 'Altair', 'Rigel',
+  'Sirio', 'Castor', 'Polar', 'Helio', 'Selene', 'Zephyr', 'Ion', 'Kraken', 'Vortex', 'Quasar',
+];
+
+const normalizeInput = (input: PlayerInput): PlayerInput => {
+  const mx = clamp(Number.isFinite(input.mx) ? input.mx : 0, -1, 1);
+  const my = clamp(Number.isFinite(input.my) ? input.my : 0, -1, 1);
+  const aim = Number.isFinite(input.aim) ? input.aim : 0;
+  const len = Math.hypot(mx, my);
+  if (len <= 1 || len === 0) {
+    return { ...input, mx, my, aim };
+  }
+  return { ...input, mx: mx / len, my: my / len, aim };
+};
+
+const resolveCircleRectCollision = (px: number, py: number, r: Rect): Vec2 => {
+  const nx = clamp(px, r.x, r.x + r.w);
+  const ny = clamp(py, r.y, r.y + r.h);
+  const dx = px - nx;
+  const dy = py - ny;
+  const d2 = dx * dx + dy * dy;
+  if (d2 > PLAYER_RADIUS * PLAYER_RADIUS) return { x: px, y: py };
+  if (d2 > 1e-9) {
+    const d = Math.sqrt(d2);
+    const push = PLAYER_RADIUS - d;
+    return { x: px + (dx / d) * push, y: py + (dy / d) * push };
+  }
+  const left = px - r.x;
+  const right = r.x + r.w - px;
+  const top = py - r.y;
+  const bottom = r.y + r.h - py;
+  const m = Math.min(left, right, top, bottom);
+  if (m === left) return { x: r.x - PLAYER_RADIUS, y: py };
+  if (m === right) return { x: r.x + r.w + PLAYER_RADIUS, y: py };
+  if (m === top) return { x: px, y: r.y - PLAYER_RADIUS };
+  return { x: px, y: r.y + r.h + PLAYER_RADIUS };
+};
+
+export class MatchSim {
+  readonly map: GameMap;
+  readonly seed: number;
+  phase: MatchPhase = 'lobby';
+  timeMs = 0;
+  tickCount = 0;
+  zone: ZoneState;
+  players: SimPlayer[] = [];
+  bullets: Bullet[] = [];
+  items: GroundItem[] = [];
+  events: SimEvent[] = [];
+  dropEndsAtMs: number;
+  winnerId: number | null = null;
+  private rng: Rng;
+  private nextPlayerId = 1;
+  private nextBulletId = 1;
+  private nextPlacement = 0;
+  private totalPlayers = 0;
+
+  constructor(config: MatchConfig) {
+    this.seed = config.seed;
+    this.rng = new Rng(config.seed ^ 0x5f3759df);
+    this.map = generateMap(config.seed);
+    this.zone = initialZone(this.rng);
+    this.dropEndsAtMs = config.dropPhaseMs;
+    resetItemIds();
+    for (const p of this.map.pois) {
+      for (const b of p.buildings) {
+        this.items.push(spawnLootAt(this.rng, { x: b.x + b.w / 2, y: b.y + b.h / 2 }));
+      }
+    }
+    for (const s of this.map.lootSpawns) {
+      if (this.rng.chance(0.6)) this.items.push(spawnLootAt(this.rng, s));
+    }
+    for (let i = 0; i < config.botCount; i++) {
+      this.addBot(`BOT ${BOT_NAMES_ES[i % BOT_NAMES_ES.length]}`);
+    }
+  }
+
+  private randomSpawn(): Vec2 {
+    for (let i = 0; i < 50; i++) {
+      const x = this.rng.range(-WORLD_RADIUS + 80, WORLD_RADIUS - 80);
+      const y = this.rng.range(-WORLD_RADIUS + 80, WORLD_RADIUS - 80);
+      if (!circleHitsObstacle(x, y, PLAYER_RADIUS, this.map.obstacles)) return { x, y };
+    }
+    return { x: 0, y: 0 };
+  }
+
+  addPlayer(name: string, bot: boolean): SimPlayer {
+    const spawn = this.randomSpawn();
+    const player: SimPlayer = {
+      id: this.nextPlayerId++,
+      name: sanitizeName(name),
+      bot,
+      x: spawn.x,
+      y: spawn.y,
+      aim: 0,
+      hp: MAX_HP,
+      shield: 0,
+      alive: true,
+      kills: 0,
+      inventory: emptyInventory(),
+      input: { mx: 0, my: 0, aim: 0, fire: false, seq: 0 },
+      lastFireMs: -9999,
+      reloadEndMs: -1,
+      firing: false,
+      landing: false,
+      dropChoice: null,
+      placement: 0,
+    };
+    this.players.push(player);
+    this.totalPlayers += 1;
+    return player;
+  }
+
+  addBot(name: string): SimPlayer {
+    return this.addPlayer(name, true);
+  }
+
+  startDrop(): void {
+    if (this.phase !== 'lobby') return;
+    this.phase = 'drop';
+    this.timeMs = 0;
+    for (const p of this.players) p.landing = true;
+  }
+
+  chooseDrop(playerId: number, x: number, y: number): boolean {
+    if (this.phase !== 'drop') return false;
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || !player.alive) return false;
+    const cx = clamp(x, -WORLD_RADIUS + 40, WORLD_RADIUS - 40);
+    const cy = clamp(y, -WORLD_RADIUS + 40, WORLD_RADIUS - 40);
+    player.dropChoice = { x: cx, y: cy };
+    return true;
+  }
+
+  private landPlayer(player: SimPlayer): void {
+    let pos = player.dropChoice ?? { x: this.zone.cx, y: this.zone.cy };
+    if (circleHitsObstacle(pos.x, pos.y, PLAYER_RADIUS, this.map.obstacles)) {
+      pos = this.randomSpawn();
+    }
+    player.x = pos.x;
+    player.y = pos.y;
+    player.landing = false;
+    player.dropChoice = null;
+  }
+
+  setInput(playerId: number, input: PlayerInput): void {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || !player.alive) return;
+    player.input = normalizeInput({ ...input, aim: input.aim });
+  }
+
+  private activeWeapon(player: SimPlayer) {
+    return player.inventory.weapons[player.inventory.activeWeapon] ?? null;
+  }
+
+  swapWeapon(playerId: number, slot: number): boolean {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || !player.alive || this.phase !== 'play') return false;
+    if (slot !== 0 && slot !== 1) return false;
+    if (!player.inventory.weapons[slot]) return false;
+    player.inventory.activeWeapon = slot;
+    player.reloadEndMs = -1;
+    return true;
+  }
+
+  reload(playerId: number): boolean {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || !player.alive || this.phase !== 'play') return false;
+    if (player.reloadEndMs > this.timeMs) return false;
+    const weapon = this.activeWeapon(player);
+    if (!weapon) return false;
+    const def = WEAPONS[weapon.weaponId];
+    if (weapon.ammoInMag >= def.magSize || player.inventory.ammo <= 0) return false;
+    player.reloadEndMs = this.timeMs + def.reloadMs;
+    return true;
+  }
+
+  useConsumable(playerId: number, consumable: ConsumableId): boolean {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || !player.alive || this.phase !== 'play') return false;
+    if (consumable === 'botiquin') {
+      if (player.inventory.botiquines <= 0 || player.hp >= MAX_HP) return false;
+      player.inventory.botiquines -= 1;
+      player.hp = Math.min(MAX_HP, player.hp + 50);
+    } else {
+      if (player.inventory.escudos <= 0 || player.shield >= MAX_SHIELD) return false;
+      player.inventory.escudos -= 1;
+      player.shield = Math.min(MAX_SHIELD, player.shield + 50);
+    }
+    return true;
+  }
+
+  pickup(playerId: number): GroundItem | null {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || !player.alive || this.phase !== 'play') return null;
+    let best: GroundItem | null = null;
+    let bestD = PICKUP_RADIUS;
+    for (const item of this.items) {
+      const d = dist(player, item.pos);
+      if (d < bestD) {
+        bestD = d;
+        best = item;
+      }
+    }
+    if (!best) return null;
+    if (!this.applyItem(player, best)) return null;
+    this.items = this.items.filter((i) => i.id !== best!.id);
+    this.events.push({
+      kind: 'pickup',
+      playerId: player.id,
+      x: player.x,
+      y: player.y,
+    });
+    return best;
+  }
+
+  private applyItem(player: SimPlayer, item: GroundItem): boolean {
+    const inv = player.inventory;
+    switch (item.kind) {
+      case 'weapon': {
+        const weaponId = item.weaponId!;
+        const existing = inv.weapons.findIndex((w) => w === null);
+        const slot = existing >= 0 ? existing : inv.activeWeapon;
+        inv.weapons[slot] = { weaponId, rarity: item.rarity, ammoInMag: 0 };
+        inv.activeWeapon = slot;
+        return true;
+      }
+      case 'consumable': {
+        if (item.consumableId === 'botiquin') {
+          if (inv.botiquines >= 5) return false;
+          inv.botiquines += 1;
+        } else {
+          if (inv.escudos >= 5) return false;
+          inv.escudos += 1;
+        }
+        return true;
+      }
+      case 'ammo': {
+        inv.ammo += item.amount ?? 24;
+        return true;
+      }
+      case 'shieldcore': {
+        if (player.shield >= MAX_SHIELD) return false;
+        player.shield = Math.min(MAX_SHIELD, player.shield + (item.amount ?? 25));
+        return true;
+      }
+    }
+  }
+
+  dropWeapon(playerId: number): boolean {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || !player.alive || this.phase !== 'play') return false;
+    const weapon = this.activeWeapon(player);
+    if (!weapon) return false;
+    this.items.push({
+      id: 0,
+      pos: { x: player.x, y: player.y },
+      kind: 'weapon',
+      weaponId: weapon.weaponId,
+      rarity: weapon.rarity,
+    });
+    const idx = this.items.length - 1;
+    this.items[idx]!.id = 900000 + this.items[idx]!.id;
+    player.inventory.weapons[player.inventory.activeWeapon] = null;
+    player.inventory.activeWeapon = player.inventory.weapons[0] ? 0 : 1;
+    return true;
+  }
+
+  private fireWeapon(player: SimPlayer, nowMs: number): void {
+    const weapon = this.activeWeapon(player);
+    if (!weapon) return;
+    const def = WEAPONS[weapon.weaponId];
+    if (nowMs - player.lastFireMs < def.fireIntervalMs) return;
+    if (player.reloadEndMs > nowMs) return;
+    if (weapon.ammoInMag <= 0) return;
+    weapon.ammoInMag -= 1;
+    player.lastFireMs = nowMs;
+    player.firing = true;
+    const mult = RARITY_DAMAGE_MULT[weapon.rarity];
+    for (let i = 0; i < def.pellets; i++) {
+      const spread = (this.rng.next() - 0.5) * 2 * def.spreadRad;
+      const angle = player.aim + spread;
+      this.bullets.push({
+        id: this.nextBulletId++,
+        x: player.x + Math.cos(angle) * (PLAYER_RADIUS + 4),
+        y: player.y + Math.sin(angle) * (PLAYER_RADIUS + 4),
+        vx: Math.cos(angle) * def.bulletSpeed,
+        vy: Math.sin(angle) * def.bulletSpeed,
+        ownerId: player.id,
+        damage: def.damage * mult,
+        traveled: 0,
+        range: def.range,
+      });
+    }
+    this.events.push({ kind: 'shot', playerId: player.id, x: player.x, y: player.y, weaponId: weapon.weaponId });
+  }
+
+  private killPlayer(victim: SimPlayer, killer: SimPlayer | null): void {
+    victim.alive = false;
+    victim.hp = 0;
+    this.nextPlacement += 1;
+    victim.placement = this.totalPlayers - this.nextPlacement + 1;
+    if (killer && killer.id !== victim.id) killer.kills += 1;
+    for (const w of victim.inventory.weapons) {
+      if (w) {
+        this.items.push({
+          id: 0,
+          pos: { x: victim.x + this.rng.range(-20, 20), y: victim.y + this.rng.range(-20, 20) },
+          kind: 'weapon',
+          weaponId: w.weaponId,
+          rarity: w.rarity,
+        });
+        const idx = this.items.length - 1;
+        this.items[idx]!.id = 900000 + this.items[idx]!.id;
+      }
+    }
+    if (victim.inventory.ammo > 0) {
+      this.items.push({
+        id: 900000 + this.rng.int(1, 999999),
+        pos: { x: victim.x + this.rng.range(-20, 20), y: victim.y + this.rng.range(-20, 20) },
+        kind: 'ammo',
+        rarity: 'comun',
+        amount: Math.min(victim.inventory.ammo, 40),
+      });
+    }
+    this.events.push({
+      kind: 'kill',
+      killerId: killer?.id,
+      killerName: killer?.name,
+      victimId: victim.id,
+      victimName: victim.name,
+    });
+  }
+
+  private applyDamage(victim: SimPlayer, damage: number, killer: SimPlayer | null): void {
+    let remaining = damage;
+    if (victim.shield > 0) {
+      const absorbed = Math.min(victim.shield, remaining);
+      victim.shield -= absorbed;
+      remaining -= absorbed;
+    }
+    victim.hp -= remaining;
+    this.events.push({ kind: 'hit', victimId: victim.id, playerId: killer?.id });
+    if (victim.hp <= 0) this.killPlayer(victim, killer);
+  }
+
+  private movePlayer(player: SimPlayer, dtMs: number): void {
+    if (!player.alive || player.landing) return;
+    const speed = PLAYER_SPEED * (TICK_MS / 1000) * (dtMs / TICK_MS);
+    let nx = player.x + player.input.mx * speed;
+    let ny = player.y + player.input.my * speed;
+    nx = clamp(nx, -WORLD_RADIUS + PLAYER_RADIUS, WORLD_RADIUS - PLAYER_RADIUS);
+    ny = clamp(ny, -WORLD_RADIUS + PLAYER_RADIUS, WORLD_RADIUS - PLAYER_RADIUS);
+    for (const o of this.map.obstacles) {
+      const resolved = resolveCircleRectCollision(nx, ny, o);
+      nx = resolved.x;
+      ny = resolved.y;
+    }
+    player.x = nx;
+    player.y = ny;
+  }
+
+  private stepBullets(dtMs: number): void {
+    const dtSec = dtMs / 1000;
+    const alive: Bullet[] = [];
+    for (const b of this.bullets) {
+      const nx = b.x + b.vx * dtSec;
+      const ny = b.y + b.vy * dtSec;
+      const stepLen = Math.hypot(nx - b.x, ny - b.y);
+      let hit = false;
+
+      for (const o of this.map.obstacles) {
+        if (segmentHitsRect(b.x, b.y, nx, ny, o)) {
+          hit = true;
+          break;
+        }
+      }
+
+      if (!hit) {
+        for (const p of this.players) {
+          if (!p.alive || p.id === b.ownerId || p.landing) continue;
+          if (this.segmentHitsPlayer(b.x, b.y, nx, ny, p.x, p.y, PLAYER_RADIUS)) {
+            const killer = this.players.find((k) => k.id === b.ownerId) ?? null;
+            this.applyDamage(p, b.damage, killer);
+            hit = true;
+            break;
+          }
+        }
+      }
+
+      b.traveled += stepLen;
+      if (!hit && b.traveled < b.range && Math.abs(nx) < WORLD_RADIUS && Math.abs(ny) < WORLD_RADIUS) {
+        b.x = nx;
+        b.y = ny;
+        alive.push(b);
+      }
+    }
+    this.bullets = alive;
+  }
+
+  private segmentHitsPlayer(
+    ax: number,
+    ay: number,
+    bx: number,
+    by: number,
+    cx: number,
+    cy: number,
+    r: number,
+  ): boolean {
+    const dx = bx - ax;
+    const dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    const t = len2 === 0 ? 0 : clamp(((cx - ax) * dx + (cy - ay) * dy) / len2, 0, 1);
+    const px = ax + dx * t;
+    const py = ay + dy * t;
+    return (px - cx) * (px - cx) + (py - cy) * (py - cy) <= r * r;
+  }
+
+  private checkVictory(): void {
+    if (this.phase !== 'play') return;
+    const alivePlayers = this.players.filter((p) => p.alive);
+    if (alivePlayers.length <= 1) {
+      this.phase = 'over';
+      this.winnerId = alivePlayers[0]?.id ?? null;
+      const winner = alivePlayers[0];
+      if (winner) {
+        this.nextPlacement += 1;
+        winner.placement = 1;
+      }
+    }
+  }
+
+  tick(dtMs: number): SimEvent[] {
+    this.events = [];
+    this.timeMs += dtMs;
+    this.tickCount += 1;
+
+    if (this.phase === 'drop') {
+      const allChosen = this.players.every((p) => p.dropChoice !== null);
+      if (this.timeMs >= this.dropEndsAtMs || allChosen) {
+        for (const p of this.players) this.landPlayer(p);
+        this.phase = 'play';
+      }
+    }
+
+    if (this.phase === 'play') {
+      for (const p of this.players) {
+        p.firing = false;
+        if (!p.alive) continue;
+        this.movePlayer(p, dtMs);
+        if (p.input.fire) this.fireWeapon(p, this.timeMs);
+        if (p.reloadEndMs > 0 && this.timeMs >= p.reloadEndMs) {
+          const weapon = this.activeWeapon(p);
+          if (weapon) {
+            const def = WEAPONS[weapon.weaponId];
+            const need = def.magSize - weapon.ammoInMag;
+            const take = Math.min(need, p.inventory.ammo);
+            weapon.ammoInMag += take;
+            p.inventory.ammo -= take;
+          }
+          p.reloadEndMs = -1;
+        }
+      }
+
+      this.stepBullets(dtMs);
+
+      updateZone(this.zone, dtMs, this.rng);
+      const dps = zoneDps(this.zone);
+      for (const p of this.players) {
+        if (!p.alive) continue;
+        if (isOutsideZone(p.x, p.y, this.zone)) {
+          const dmg = (dps * dtMs) / 1000;
+          p.hp -= dmg;
+          if (p.hp <= 0) this.killPlayer(p, null);
+        }
+      }
+
+      this.checkVictory();
+    }
+
+    return this.events;
+  }
+
+  aliveCount(): number {
+    return this.players.filter((p) => p.alive).length;
+  }
+
+  placementOf(playerId: number): number {
+    const p = this.players.find((pl) => pl.id === playerId);
+    if (!p) return 0;
+    if (p.alive && this.phase === 'over' && this.winnerId === playerId) return 1;
+    return p.placement || 1;
+  }
+}
