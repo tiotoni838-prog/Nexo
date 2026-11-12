@@ -107,6 +107,15 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 | Biblia del juego (12 áreas, estado y hoja de ruta) | `docs/BIBLIA-DEL-JUEGO.md` | manual | — |
 | Binarios nativos 1.5.0 (Windows/Linux, Electron 33) | `npm run desktop` + poda; zips <100 MB en `releases/` | tamaños verificados (95 MiB / 87 MiB) | — |
 
+## v1.6.0 — arsenal profesional, roles y zonas de loot
+
+| Función | Implementación | Verificación | Evidencia |
+|---|---|---|---|
+| 24 armas (12 nuevas según tablas de diseño) | `shared/weapons.ts`: pistola-automatica, pistola-pesada, subfusil-pesado, mini-subfusil, carabina, fusil-rafaga, fusil-pesado, escopeta-automatica, escopeta-tactica, cerrojo-pesado, francotirador-elite, ametralladora-pesada | `test/content.test.ts` (24 armas, categorías completas, escalado de daño) | `npm test` 133/133 ✓ |
+| 9 personajes con rol (6 roles cubiertos) | `shared/characters.ts`: campo `role` + Kael (atacante), Bruno (defensor), Nova (explorador), reutilizan habilidades existentes del sim | `test/abilities.test.ts` (9 personajes, 6 roles, cooldowns) | ídem |
+| Zonas de loot por nivel (alto/medio/bajo) | `shared/map.ts`: `LootTier` en los 24 POIs, spawns 10–14 / 6–9 / 3–5 según tier | `test/content.test.ts` (tiers válidos, zonas altas con más spawns) | ídem |
+| Binarios nativos 1.6.0 (Windows/Linux, Electron 33) | `npm run desktop` + poda; zips <100 MB en `releases/` | tamaños verificados (95 MiB / 87 MiB) | — |
+
 ## Bloqueos registrados
 
 1. **APK/AAB e iOS firmados**: requieren Android Studio / Xcode (no disponibles en el

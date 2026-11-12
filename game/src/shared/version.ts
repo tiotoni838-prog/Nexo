@@ -1,2 +1,2 @@
 export const GAME_NAME = 'Nexo FPS';
-export const GAME_VERSION = '1.5.0';
+export const GAME_VERSION = '1.6.0';

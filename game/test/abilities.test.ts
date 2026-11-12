@@ -17,13 +17,16 @@ const enterPlay = (sim: MatchSim, humans: SimPlayer[]): void => {
 };
 
 describe('Personajes y habilidades', () => {
-  it('existen 6 personajes con habilidad activa y pasivas', () => {
-    expect(CHARACTER_IDS.length).toBe(6);
+  it('existen 9 personajes con rol, habilidad activa y pasivas', () => {
+    expect(CHARACTER_IDS.length).toBe(9);
+    const roles = new Set(CHARACTER_IDS.map((id) => CHARACTERS[id]!.role));
     for (const id of CHARACTER_IDS) {
-      const def = CHARACTERS[id];
+      const def = CHARACTERS[id]!;
       expect(def.ability.cooldownMs).toBeGreaterThan(0);
       expect(def.passives.speedMult).toBeGreaterThan(0);
+      expect(['atacante', 'apoyo', 'explorador', 'defensor', 'sigilo', 'francotirador']).toContain(def.role);
     }
+    expect(roles.size).toBe(6);
   });
 
   it('valida characterId de forma segura', () => {

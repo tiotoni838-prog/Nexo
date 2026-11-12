@@ -8,9 +8,12 @@ export interface Rect {
   h: number;
 }
 
+export type LootTier = 'alto' | 'medio' | 'bajo';
+
 export interface Poi {
   nameEs: string;
   nameEn: string;
+  lootTier: LootTier;
   center: Vec2;
   radius: number;
   buildings: Rect[];
@@ -39,7 +42,7 @@ export type MapPresetId = 'nexo-urbano' | 'desierto-solar' | 'volcan-ceniza';
 
 export const MAP_PRESETS: Record<
   MapPresetId,
-  { nameEs: string; nameEn: string; palette: MapPalette; pois: Array<[string, string]>; obstacleCount: number }
+  { nameEs: string; nameEn: string; palette: MapPalette; pois: Array<[string, string, LootTier]>; obstacleCount: number }
 > = {
   'nexo-urbano': {
     nameEs: 'Nexo Urbano',
@@ -52,14 +55,14 @@ export const MAP_PRESETS: Record<
       sky: '#0b111a',
     },
     pois: [
-      ['Puerto Nexo', 'Nexo Port'],
-      ['Torres Gemelas de Cuarzo', 'Quartz Twin Towers'],
-      ['Bosque de Antenas', 'Antenna Forest'],
-      ['Cráter Aurora', 'Aurora Crater'],
-      ['Mercado Flotante', 'Floating Market'],
-      ['Refinería del Sol', 'Sun Refinery'],
-      ['Jardines Colgantes', 'Hanging Gardens'],
-      ['Estación Cero', 'Zero Station'],
+      ['Puerto Nexo', 'Nexo Port', 'alto'],
+      ['Torres Gemelas de Cuarzo', 'Quartz Twin Towers', 'alto'],
+      ['Bosque de Antenas', 'Antenna Forest', 'bajo'],
+      ['Cráter Aurora', 'Aurora Crater', 'medio'],
+      ['Mercado Flotante', 'Floating Market', 'medio'],
+      ['Refinería del Sol', 'Sun Refinery', 'alto'],
+      ['Jardines Colgantes', 'Hanging Gardens', 'bajo'],
+      ['Estación Cero', 'Zero Station', 'medio'],
     ],
     obstacleCount: 90,
   },
@@ -74,14 +77,14 @@ export const MAP_PRESETS: Record<
       sky: '#2a1f10',
     },
     pois: [
-      ['Cañón Rojo', 'Red Canyon'],
-      ['Pueblo Polvo', 'Dust Town'],
-      ['Ruinas del Sol', 'Sun Ruins'],
-      ['Pozo Seco', 'Dry Well'],
-      ['Dunas Doradas', 'Golden Dunes'],
-      ['Fuerte Calavera', 'Skull Fort'],
-      ['Oasis Espejo', 'Mirror Oasis'],
-      ['Mina Abandonada', 'Abandoned Mine'],
+      ['Cañón Rojo', 'Red Canyon', 'medio'],
+      ['Pueblo Polvo', 'Dust Town', 'medio'],
+      ['Ruinas del Sol', 'Sun Ruins', 'alto'],
+      ['Pozo Seco', 'Dry Well', 'bajo'],
+      ['Dunas Doradas', 'Golden Dunes', 'bajo'],
+      ['Fuerte Calavera', 'Skull Fort', 'alto'],
+      ['Oasis Espejo', 'Mirror Oasis', 'medio'],
+      ['Mina Abandonada', 'Abandoned Mine', 'medio'],
     ],
     obstacleCount: 120,
   },
@@ -96,14 +99,14 @@ export const MAP_PRESETS: Record<
       sky: '#160b0b',
     },
     pois: [
-      ['Cráter Principal', 'Main Crater'],
-      ['Coladas de Lava', 'Lava Flows'],
-      ['Pueblo Ceniza', 'Ash Village'],
-      ['Grietas Rugientes', 'Roaring Fissures'],
-      ['Observatorio Umbral', 'Threshold Observatory'],
-      ['Campo de Obsidiana', 'Obsidian Field'],
-      ['Refugio Subterráneo', 'Underground Shelter'],
-      ['Pico Tormenta', 'Storm Peak'],
+      ['Cráter Principal', 'Main Crater', 'alto'],
+      ['Coladas de Lava', 'Lava Flows', 'medio'],
+      ['Pueblo Ceniza', 'Ash Village', 'medio'],
+      ['Grietas Rugientes', 'Roaring Fissures', 'bajo'],
+      ['Observatorio Umbral', 'Threshold Observatory', 'alto'],
+      ['Campo de Obsidiana', 'Obsidian Field', 'medio'],
+      ['Refugio Subterráneo', 'Underground Shelter', 'medio'],
+      ['Pico Tormenta', 'Storm Peak', 'bajo'],
     ],
     obstacleCount: 60,
   },
@@ -114,7 +117,6 @@ export const MAP_PRESET_IDS = Object.keys(MAP_PRESETS) as MapPresetId[];
 export const isMapPresetId = (value: unknown): value is MapPresetId =>
   typeof value === 'string' && Object.prototype.hasOwnProperty.call(MAP_PRESETS, value);
 
-const POI_NAMES: Array<[string, string]> = MAP_PRESETS['nexo-urbano'].pois;
 
 const rectOverlapsAny = (r: Rect, rects: Rect[]): boolean =>
   rects.some(
@@ -163,10 +165,18 @@ export const generateMap = (seed: number, presetId: MapPresetId = 'nexo-urbano')
       }
     }
 
-    pois.push({ nameEs: preset.pois[i]![0], nameEn: preset.pois[i]![1], center, radius, buildings });
+    const tier = preset.pois[i]![2];
+    pois.push({
+      nameEs: preset.pois[i]![0],
+      nameEn: preset.pois[i]![1],
+      lootTier: tier,
+      center,
+      radius,
+      buildings,
+    });
     obstacles.push(...buildings);
 
-    const spawnCount = rng.int(6, 10);
+    const spawnCount = tier === 'alto' ? rng.int(10, 14) : tier === 'medio' ? rng.int(6, 9) : rng.int(3, 5);
     for (let s = 0; s < spawnCount; s++) {
       lootSpawns.push({
         x: center.x + rng.range(-radius, radius),

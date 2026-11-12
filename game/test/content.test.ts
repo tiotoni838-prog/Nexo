@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { WEAPONS, WEAPON_IDS, isWeaponId, EXPLOSION_DAMAGE, EXPLOSION_RADIUS } from '../src/shared/weapons.js';
+import type { LootTier } from '../src/shared/map.js';
 import { MAP_PRESETS, MAP_PRESET_IDS, isMapPresetId, generateMap } from '../src/shared/map.js';
 import { GAME_VERSION, GAME_NAME } from '../src/shared/version.js';
 
 describe('arsenal extendido', () => {
-  it('tiene 12 armas con estadísticas coherentes', () => {
-    expect(WEAPON_IDS).toHaveLength(12);
+  it('tiene 24 armas con estadísticas coherentes', () => {
+    expect(WEAPON_IDS).toHaveLength(24);
     for (const id of WEAPON_IDS) {
       const w = WEAPONS[id];
       expect(w.id).toBe(id);
@@ -28,6 +29,17 @@ describe('arsenal extendido', () => {
   it('isWeaponId rechaza identificadores desconocidos', () => {
     expect(isWeaponId('fusil')).toBe(true);
     expect(isWeaponId('bazooka-fantasma')).toBe(false);
+  });
+
+  it('el arsenal cubre todas las categorías del diseño', () => {
+    for (const id of ['pistola-automatica', 'pistola-pesada', 'subfusil-pesado', 'mini-subfusil', 'carabina', 'fusil-rafaga', 'fusil-pesado', 'escopeta-automatica', 'escopeta-tactica', 'cerrojo-pesado', 'francotirador-elite', 'ametralladora-pesada']) {
+      expect(isWeaponId(id)).toBe(true);
+    }
+    expect(WEAPONS['francotirador-elite']!.damage).toBeGreaterThan(WEAPONS.francotirador.damage);
+    expect(WEAPONS['cerrojo-pesado']!.damage).toBeGreaterThan(WEAPONS.francotirador.damage);
+    expect(WEAPONS['ametralladora-pesada']!.magSize).toBeGreaterThan(WEAPONS.ametralladora.magSize);
+    const escopetas = WEAPON_IDS.filter((id) => id.startsWith('escopeta'));
+    expect(escopetas).toHaveLength(4);
   });
 });
 
@@ -61,6 +73,25 @@ describe('mapas múltiples', () => {
   it('isMapPresetId valida identificadores', () => {
     expect(isMapPresetId('volcan-ceniza')).toBe(true);
     expect(isMapPresetId('luna')).toBe(false);
+  });
+
+  it('cada POI tiene nivel de loot y las zonas altas dan más spawns', () => {
+    const tiersValidos: LootTier[] = ['alto', 'medio', 'bajo'];
+    for (const id of MAP_PRESET_IDS) {
+      for (const [, , tier] of MAP_PRESETS[id].pois) {
+        expect(tiersValidos).toContain(tier);
+      }
+    }
+    const mapa = generateMap(4242, 'nexo-urbano');
+    const altas = mapa.pois.filter((p) => p.lootTier === 'alto');
+    const bajas = mapa.pois.filter((p) => p.lootTier === 'bajo');
+    expect(altas.length).toBeGreaterThan(0);
+    expect(bajas.length).toBeGreaterThan(0);
+    const spawnsEn = (poi: (typeof mapa.pois)[number]): number =>
+      mapa.lootSpawns.filter(
+        (s) => Math.hypot(s.x - poi.center.x, s.y - poi.center.y) <= poi.radius + 20,
+      ).length;
+    expect(spawnsEn(altas[0]!)).toBeGreaterThan(4);
   });
 });
 

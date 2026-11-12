@@ -40,12 +40,12 @@ Versión del documento: **1.5.0**.
 - ROADMAP: clima (lluvia/niebla), zonas secretas con llave, estructuras destruibles.
 
 ## 5. Armas, equipo y objetos — ✅ implementado
-- 12 armas con rareza (6 colores) y daño inspirado en balística real; lanzacohetes
+- 24 armas con rareza (6 colores) y daño inspirado en balística real; lanzacohetes
   explosivo; granadas; airdrops; chaleco/casco; botiquines/escudos; munición.
 - ROADMAP: accesorios (miras, silenciador, cargadores), molotov/flash, minas.
 
 ## 6. Personajes, roles y mascotas — ✅ implementado
-- 6 personajes originales con activa + pasivas (`characters.ts`); slide y prone.
+- 9 personajes originales con activa + pasivas (`characters.ts`); slide y prone.
 - **Mascotas** (`pets.ts`): 6 con bonos pasivos pequeños (curación, velocidad,
   botín, munición), nivel por partidas (máx. 30), se compran con NX (gratis jugando).
 - ROADMAP: definitivas (ultimates), evolución visual de mascotas, emotes sincronizados.
@@ -96,7 +96,7 @@ Versión del documento: **1.5.0**.
 5. Parches de balance con notas públicas cada 2–4 semanas.
 
 ## Hoja de ruta de lanzamiento
-- **Día 1**: 1 mapa + modos rápidos (✅ ya cubierto), 12 armas (✅), 6 personajes (✅),
+- **Día 1**: 1 mapa + modos rápidos (✅ ya cubierto), 24 armas (✅), 9 personajes (✅),
   pase + tienda + ruleta (✅), misiones (✅), amigos/reportes (✅).
 - **Mes 1–3**: dúo/escuadrón reales, infectados, TDM, clima, accesorios de armas,
   bot de Discord, temporadas.

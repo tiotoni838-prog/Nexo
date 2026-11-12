@@ -4,7 +4,7 @@ Battle Royale original, competitivo y accesible. Este repositorio contiene la
 **especificación de ingeniería** (`NEXO_FRONTIER_MEGA_SPEC.part*`, 100.000 fichas de
 trabajo) y el **vertical slice jugable** en `game/`.
 
-## Qué hay implementado (v1.5.0, verificado)
+## Qué hay implementado (v1.6.0, verificado)
 
 - **Simulación autoritativa compartida** (`game/src/shared/`): movimiento con colisiones,
   **12 armas** con rarezas y daño inspirado en balística real (incluido **lanzacohetes
@@ -57,23 +57,23 @@ trabajo) y el **vertical slice jugable** en `game/`.
   (`ADMIN_TOKEN`) que consulta la API de transacciones de PayPal y muestra total USD,
   número de operaciones y desglose por artículo. Endpoint JSON: `/api/admin/earnings?days=N`.
 
-## Descargar y jugar (v1.5.0)
+## Descargar y jugar (v1.6.0)
 
 En la carpeta [`releases/`](releases/) del repo (o en `/download` del servidor de juego,
 con botones por plataforma):
 
-- **[NexoFPS-1.5.0-windows-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.5.0-windows-x64.zip)** —
+- **[NexoFPS-1.6.0-windows-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-windows-x64.zip)** —
   **aplicación nativa de Windows** (Electron 33): descomprime y ejecuta `nexo-fps.exe`.
-- **[NexoFPS-1.5.0-linux-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.5.0-linux-x64.zip)** —
+- **[NexoFPS-1.6.0-linux-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-linux-x64.zip)** —
   **aplicación nativa de Linux**: descomprime y ejecuta `./nexo-fps`.
-- **NexoFPS-1.5.0-macos** — se genera con `cd game && npm run desktop`
+- **NexoFPS-1.6.0-macos** — se genera con `cd game && npm run desktop`
   (`dist-desktop/NexoFPS-darwin-x64` y `-arm64`); no se aloja en Git por superar los
   100 MB por archivo de GitHub.
-- **[NexoFPS-1.5.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.5.0-web-standalone.zip)** —
+- **[NexoFPS-1.6.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-web-standalone.zip)** —
   el juego completo en UN archivo HTML. Descomprime, abre `NexoFPS.html` con doble clic
   y juega contra bots sin internet. Windows / macOS / Linux. También funciona en el
   navegador del **teléfono** (controles táctiles + pantalla completa).
-- **[NexoFPS-1.5.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.5.0-servidor.zip)** —
+- **[NexoFPS-1.6.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.6.0-servidor.zip)** —
   servidor dedicado (Node.js 20+) con tienda PayPal y panel de ganancias.
 
 Android (APK) e iOS: el proyecto WebView nativo se empaqueta con Android Studio /
@@ -81,6 +81,21 @@ Xcode — instrucciones en `docs/OPERATIONS.md` (no se alojan binarios sin build
 verificada de esos IDE).
 
 Para anunciar el juego en **Discord**: guía y embed listos en [`discord/DISCORD.md`](discord/DISCORD.md).
+
+### Arsenal profesional, roles y zonas de loot (v1.6.0)
+- **24 armas** (`game/src/shared/weapons.ts`): 12 nuevas según las tablas de
+  diseño — pistola automática y pesada, subfusil pesado y mini, carabina, fusil
+  de ráfaga y pesado, escopetas automática y táctica, francotirador de cerrojo
+  pesado y de élite (110 de daño, un tiro), ametralladora pesada de 100 balas.
+  TTK objetivo: SMG 0.5–0.7 s, rifle 3–4 balas, francotirador de un tiro.
+- **9 personajes con rol** (`game/src/shared/characters.ts`): los 6 originales
+  ahora tienen **rol** (atacante/apoyo/explorador/defensor/sigilo/francotirador,
+  los 6 cubiertos) y se añaden **Kael** (atacante, Frenesí), **Bruno**
+  (defensor, Piel Dura) y **Nova** (exploradora, Impulso).
+- **Zonas de loot en el mapa** (`game/src/shared/map.ts`): los 8 POIs de cada
+  uno de los 3 mapas tienen **nivel de loot** (alto/medio/bajo) que determina la
+  cantidad de spawns — las zonas altas (tipo Base Militar) dan 10–14 objetos y
+  las tranquilas 3–5, como pide el diseño de "Isla Obsidiana".
 
 ### Vehículos, mascotas y modos (v1.5.0)
 - **5 vehículos conducibles** (`game/src/shared/vehicles.ts`): moto, buggy,

@@ -1,4 +1,15 @@
-export type CharacterId = 'aurora' | 'sombra' | 'titan' | 'halcon' | 'vita' | 'vulcano';
+export type CharacterId =
+  | 'aurora'
+  | 'sombra'
+  | 'titan'
+  | 'halcon'
+  | 'vita'
+  | 'vulcano'
+  | 'kael'
+  | 'bruno'
+  | 'nova';
+
+export type CharacterRole = 'atacante' | 'apoyo' | 'explorador' | 'defensor' | 'sigilo' | 'francotirador';
 
 export type AbilityId = 'muro' | 'sprint' | 'resistencia' | 'recarga' | 'pulso' | 'sobrecarga';
 
@@ -24,6 +35,7 @@ export interface CharacterDef {
   id: CharacterId;
   nameEs: string;
   nameEn: string;
+  role: CharacterRole;
   color: string;
   ability: AbilityDef;
   passives: CharacterPassives;
@@ -44,6 +56,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     id: 'aurora',
     nameEs: 'Aurora',
     nameEn: 'Aurora',
+    role: 'apoyo',
     color: '#38e1c8',
     ability: {
       id: 'muro',
@@ -60,6 +73,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     id: 'sombra',
     nameEs: 'Sombra',
     nameEn: 'Shadow',
+    role: 'sigilo',
     color: '#b06bff',
     ability: {
       id: 'sprint',
@@ -76,6 +90,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     id: 'titan',
     nameEs: 'Titán',
     nameEn: 'Titan',
+    role: 'defensor',
     color: '#f2b632',
     ability: {
       id: 'resistencia',
@@ -92,6 +107,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     id: 'halcon',
     nameEs: 'Halcón',
     nameEn: 'Falcon',
+    role: 'francotirador',
     color: '#4ea1ff',
     ability: {
       id: 'recarga',
@@ -108,6 +124,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     id: 'vita',
     nameEs: 'Vita',
     nameEn: 'Vita',
+    role: 'apoyo',
     color: '#4ade80',
     ability: {
       id: 'pulso',
@@ -124,6 +141,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     id: 'vulcano',
     nameEs: 'Vulcano',
     nameEn: 'Volcano',
+    role: 'atacante',
     color: '#ef5b6b',
     ability: {
       id: 'sobrecarga',
@@ -135,6 +153,57 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
       durationMs: 3_000,
     },
     passives: { speedMult: 1, reloadMult: 0.88, resistance: 1, rangeMult: 1, healMult: 1 },
+  },
+  kael: {
+    id: 'kael',
+    nameEs: 'Kael',
+    nameEn: 'Kael',
+    role: 'atacante',
+    color: '#ff8a3d',
+    ability: {
+      id: 'sobrecarga',
+      nameEs: 'Frenesí',
+      nameEn: 'Frenzy',
+      descEs: '+30% de daño con el arma activa durante 3 s.',
+      descEn: '+30% weapon damage for 3 s.',
+      cooldownMs: 14_000,
+      durationMs: 3_000,
+    },
+    passives: { speedMult: 1, reloadMult: 0.9, resistance: 1, rangeMult: 1, healMult: 1 },
+  },
+  bruno: {
+    id: 'bruno',
+    nameEs: 'Bruno',
+    nameEn: 'Bruno',
+    role: 'defensor',
+    color: '#8a9bb0',
+    ability: {
+      id: 'resistencia',
+      nameEs: 'Piel Dura',
+      nameEn: 'Hard Skin',
+      descEs: 'Reduce a la mitad el daño recibido durante 4 s.',
+      descEn: 'Halves incoming damage for 4 s.',
+      cooldownMs: 18_000,
+      durationMs: 4_000,
+    },
+    passives: { speedMult: 0.97, reloadMult: 1, resistance: 0.9, rangeMult: 1, healMult: 1 },
+  },
+  nova: {
+    id: 'nova',
+    nameEs: 'Nova',
+    nameEn: 'Nova',
+    role: 'explorador',
+    color: '#ffd23d',
+    ability: {
+      id: 'sprint',
+      nameEs: 'Impulso',
+      nameEn: 'Dash',
+      descEs: 'Corre mucho más rápido durante unos segundos.',
+      descEn: 'Run much faster for a few seconds.',
+      cooldownMs: 9_000,
+      durationMs: 2_000,
+    },
+    passives: { speedMult: 1.04, reloadMult: 1, resistance: 1, rangeMult: 1, healMult: 1 },
   },
 };
 

@@ -2,16 +2,28 @@ import type { Rarity } from './constants.js';
 
 export type WeaponId =
   | 'pistola'
+  | 'pistola-automatica'
   | 'revolver'
+  | 'pistola-pesada'
   | 'subfusil'
   | 'subfusil-compacto'
+  | 'subfusil-pesado'
+  | 'mini-subfusil'
   | 'fusil'
+  | 'carabina'
+  | 'fusil-rafaga'
+  | 'fusil-pesado'
   | 'fusil-batalla'
   | 'escopeta'
+  | 'escopeta-automatica'
   | 'escopeta-doble'
+  | 'escopeta-tactica'
   | 'francotirador'
+  | 'cerrojo-pesado'
   | 'precision'
+  | 'francotirador-elite'
   | 'ametralladora'
+  | 'ametralladora-pesada'
   | 'lanzacohetes';
 
 export interface WeaponDef {
@@ -188,6 +200,165 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
     bulletSpeed: 480,
     pellets: 1,
     explosive: true,
+  },
+  // Arsenal profesional v1.6.0: 12 armas nuevas (24 en total), estadísticas
+  // orientadas a las tablas de diseño (TTK 0.5-0.7 s SMG, escopeta letal de cerca,
+  // francotirador de un tiro, LMG de supresión).
+  'pistola-automatica': {
+    id: 'pistola-automatica',
+    nameEs: 'Pistola Automática Víbora',
+    nameEn: 'Viper Auto Pistol',
+    damage: 13,
+    fireIntervalMs: 130,
+    spreadRad: 0.06,
+    range: 340,
+    magSize: 20,
+    reloadMs: 1500,
+    bulletSpeed: 620,
+    pellets: 1,
+  },
+  'pistola-pesada': {
+    id: 'pistola-pesada',
+    nameEs: 'Pistola Pesada Bruto',
+    nameEn: 'Brute Heavy Pistol',
+    damage: 30,
+    fireIntervalMs: 380,
+    spreadRad: 0.04,
+    range: 460,
+    magSize: 8,
+    reloadMs: 1700,
+    bulletSpeed: 700,
+    pellets: 1,
+  },
+  'subfusil-pesado': {
+    id: 'subfusil-pesado',
+    nameEs: 'Subfusil Pesado Golpe',
+    nameEn: 'Heavy SMG',
+    damage: 13,
+    fireIntervalMs: 105,
+    spreadRad: 0.1,
+    range: 430,
+    magSize: 40,
+    reloadMs: 1900,
+    bulletSpeed: 660,
+    pellets: 1,
+  },
+  'mini-subfusil': {
+    id: 'mini-subfusil',
+    nameEs: 'Mini Subfusil Avispa',
+    nameEn: 'Wasp Mini SMG',
+    damage: 8,
+    fireIntervalMs: 65,
+    spreadRad: 0.14,
+    range: 280,
+    magSize: 25,
+    reloadMs: 1200,
+    bulletSpeed: 620,
+    pellets: 1,
+  },
+  carabina: {
+    id: 'carabina',
+    nameEs: 'Carabina Ligera',
+    nameEn: 'Light Carbine',
+    damage: 17,
+    fireIntervalMs: 130,
+    spreadRad: 0.055,
+    range: 520,
+    magSize: 30,
+    reloadMs: 1700,
+    bulletSpeed: 740,
+    pellets: 1,
+  },
+  'fusil-rafaga': {
+    id: 'fusil-rafaga',
+    nameEs: 'Fusil de Ráfaga Trío',
+    nameEn: 'Burst Rifle',
+    damage: 21,
+    fireIntervalMs: 260,
+    spreadRad: 0.045,
+    range: 560,
+    magSize: 30,
+    reloadMs: 2000,
+    bulletSpeed: 780,
+    pellets: 1,
+  },
+  'fusil-pesado': {
+    id: 'fusil-pesado',
+    nameEs: 'Fusil Pesado Bruma',
+    nameEn: 'Heavy Rifle',
+    damage: 26,
+    fireIntervalMs: 190,
+    spreadRad: 0.055,
+    range: 620,
+    magSize: 25,
+    reloadMs: 2300,
+    bulletSpeed: 800,
+    pellets: 1,
+  },
+  'escopeta-automatica': {
+    id: 'escopeta-automatica',
+    nameEs: 'Escopeta Automática Asalto',
+    nameEn: 'Auto Shotgun',
+    damage: 8,
+    fireIntervalMs: 350,
+    spreadRad: 0.24,
+    range: 200,
+    magSize: 8,
+    reloadMs: 2600,
+    bulletSpeed: 540,
+    pellets: 7,
+  },
+  'escopeta-tactica': {
+    id: 'escopeta-tactica',
+    nameEs: 'Escopeta Táctica',
+    nameEn: 'Tactical Shotgun',
+    damage: 10,
+    fireIntervalMs: 550,
+    spreadRad: 0.18,
+    range: 240,
+    magSize: 5,
+    reloadMs: 1900,
+    bulletSpeed: 560,
+    pellets: 5,
+  },
+  'cerrojo-pesado': {
+    id: 'cerrojo-pesado',
+    nameEs: 'Francotirador Cerrojo Pesado',
+    nameEn: 'Heavy Bolt Sniper',
+    damage: 95,
+    fireIntervalMs: 1700,
+    spreadRad: 0.006,
+    range: 1000,
+    magSize: 5,
+    reloadMs: 3200,
+    bulletSpeed: 1200,
+    pellets: 1,
+  },
+  'francotirador-elite': {
+    id: 'francotirador-elite',
+    nameEs: 'Francotirador de Élite Obsidiana',
+    nameEn: 'Obsidian Elite Sniper',
+    damage: 110,
+    fireIntervalMs: 2000,
+    spreadRad: 0.005,
+    range: 1100,
+    magSize: 3,
+    reloadMs: 3000,
+    bulletSpeed: 1300,
+    pellets: 1,
+  },
+  'ametralladora-pesada': {
+    id: 'ametralladora-pesada',
+    nameEs: 'Ametralladora Pesada Muralla',
+    nameEn: 'Wall Heavy LMG',
+    damage: 16,
+    fireIntervalMs: 125,
+    spreadRad: 0.13,
+    range: 520,
+    magSize: 100,
+    reloadMs: 4200,
+    bulletSpeed: 700,
+    pellets: 1,
   },
 };
 
