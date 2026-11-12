@@ -2,6 +2,7 @@ import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { loadPayPalConfig, PayPalClient, PayPalConfigError } from './paypalClient.js';
 import { STORE_CATALOG, DALO_PACKS, findStoreItem } from './store.js';
+import { notifyOwner } from '../server/telegram.js';
 
 /**
  * Rutas HTTP de la tienda. Se montan en el proceso SERVIDOR (main.ts), nunca
@@ -147,6 +148,8 @@ export const handleStoreRoutes = (
       .capture(token)
       .then((r) => {
         if (r.status === 'captured') {
+          const item = findStoreItem(r.sku);
+          notifyOwner({ kind: 'purchase', sku: r.sku, amount: item?.priceUsd ?? '?', currency: item?.currency ?? 'USD', orderId: r.orderId });
           res.writeHead(302, { location: `/?comprado=${encodeURIComponent(r.sku)}` });
           res.end();
         } else {

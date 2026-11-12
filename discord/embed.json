@@ -10,12 +10,12 @@
       "fields": [
         {
           "name": "🪟 Windows / 🍎 macOS / 🐧 Linux",
-          "value": "[Descargar ZIP — juega con doble clic](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.0.0-web-standalone.zip)",
+          "value": "[Descargar ZIP — juega con doble clic](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-web-standalone.zip)",
           "inline": false
         },
         {
           "name": "🖥️ Servidor online",
-          "value": "[Descargar servidor (Node.js 20+)](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.0.0-servidor.zip)",
+          "value": "[Descargar servidor (Node.js 20+)](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-servidor.zip)",
           "inline": false
         },
         {

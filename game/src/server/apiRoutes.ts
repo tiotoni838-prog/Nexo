@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { AccountStore, type Account } from './accounts.js';
+import { notifyOwner } from './telegram.js';
 
 /**
  * Rutas HTTP de cuentas y social. Todas las respuestas son JSON.
@@ -161,12 +162,18 @@ export const handleApiRoutes = (
         const body = JSON.parse(await readBody(req)) as { reportedId?: string; reason?: string };
         if (!body.reportedId || !body.reason) return json(400, { error: 'reportedId-and-reason-required' });
         const report = store.fileReport(body.reportedId, account.id, body.reason);
+        notifyOwner({ kind: 'report', reportedId: report.reportedId, reporterId: report.reporterId, reason: report.reason });
         return json(201, { ok: true, reportId: report.id });
       }
 
       if (url.pathname === '/api/redeem' && req.method === 'POST') {
         const body = JSON.parse(await readBody(req)) as { code?: string };
         const result = store.redeem(account, body.code ?? '');
+        if (result.ok) {
+          const r = result.reward;
+          const reward = [r.nx ? `${r.nx} NX` : null, r.dalos ? `${r.dalos} Dalos` : null].filter(Boolean).join(' + ') || 'premio';
+          notifyOwner({ kind: 'redeem', code: body.code ?? '', accountId: account.id, reward });
+        }
         return json(result.ok ? 200 : 400, result);
       }
 

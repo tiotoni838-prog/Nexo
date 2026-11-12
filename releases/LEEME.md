@@ -1,18 +1,18 @@
 # Descargas de Nexo FPS
 
-## v1.3.0
+## v1.4.0
 
-- **NexoFPS-1.3.0-windows-x64.zip** — **aplicación nativa de Windows** (Electron 33).
+- **NexoFPS-1.4.0-windows-x64.zip** — **aplicación nativa de Windows** (Electron 33).
   Descomprime y ejecuta `nexo-fps.exe`. Sin navegador.
-- **NexoFPS-1.3.0-linux-x64.zip** — **aplicación nativa de Linux**.
+- **NexoFPS-1.4.0-linux-x64.zip** — **aplicación nativa de Linux**.
   Descomprime y ejecuta `./nexo-fps`. Sin navegador.
 - **macOS**: se genera localmente con `cd game && npm run desktop`
   (`game/dist-desktop/NexoFPS-darwin-x64` y `-arm64`). No se aloja en Git porque
   supera los 100 MB por archivo que permite GitHub.
-- **NexoFPS-1.3.0-web-standalone.zip** — el juego completo en un solo HTML.
+- **NexoFPS-1.4.0-web-standalone.zip** — el juego completo en un solo HTML.
   Descomprime, abre `NexoFPS.html` con doble clic y juega (Entrenamiento contra
   bots, sin internet). Windows / macOS / Linux / navegador del teléfono.
-- **NexoFPS-1.3.0-servidor.zip** — servidor dedicado para partidas online
+- **NexoFPS-1.4.0-servidor.zip** — servidor dedicado para partidas online
   (Node.js 20+), con tienda PayPal, panel de ganancias, cuentas con 2FA,
   amigos, clanes, rankings y códigos de canje.
 
@@ -33,6 +33,9 @@ Para descargar un .zip de esta carpeta: entra al archivo y pulsa el botón
 Página con botones por plataforma (la sirve el propio juego): `http://<servidor>:8080/download`
 
 ¿Discord? Guía lista en discord/DISCORD.md.
+
+### v1.3.0
+- NexoFPS-1.3.0-windows-x64.zip · NexoFPS-1.3.0-linux-x64.zip · NexoFPS-1.3.0-web-standalone.zip · NexoFPS-1.3.0-servidor.zip
 
 ## Versiones anteriores
 

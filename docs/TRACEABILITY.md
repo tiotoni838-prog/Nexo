@@ -83,6 +83,16 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 | 6 rarezas con color + modo daltónico en rarezas | `shared/graphics.ts` RARITY_COLORS/COLORBLIND_RARITY_COLORS/rarityColor | `test/graphics.test.ts` | ídem |
 | Filtros de color (cálido/frío/B&N) + reducir efectos | `shared/graphics.ts` FILTER_CSS/canvasFilter, `client/settings.ts` filter/reduceEffects, `client/render.ts` setStyle | `test/graphics.test.ts` | ídem |
 
+## v1.4.0 — páginas por plataforma, avisos Telegram y blueprint Discord
+
+| Función | Implementación | Verificación | Evidencia |
+|---|---|---|---|
+| Página de descarga propia por plataforma (7) | `server/downloadPages.ts` + rutas `/download/<plataforma>` en `serve.ts`, botones en `client/download.html` | `test/telegram.test.ts` | `npm test` 118/118 ✓ |
+| Avisos Telegram al propietario (ventas, reportes, canjes) | `server/telegram.ts` (buildOwnerMessage, sendTelegramMessage, notifyOwner no-op sin credenciales), wiring en `apiRoutes.ts` + `paypal/storeRoutes.ts` + `main.ts` | `test/telegram.test.ts` (incl. fake fetch contra la URL de BotFather) | ídem |
+| Blueprint servidor de Discord (canales, roles, bots, reglas) | `discord/DISCORD.md` reescrito + `discord/embed.json` actualizado a 1.4.0 | manual | — |
+| Lista viva de tareas/credenciales del propietario | `docs/TAREAS-DUENO.md` | manual | — |
+| Binarios nativos 1.4.0 (Windows/Linux, Electron 33) | `npm run desktop` + poda; zips <100 MB en `releases/` | tamaños verificados (95 MiB / 87 MiB) | — |
+
 ## Bloqueos registrados
 
 1. **APK/AAB e iOS firmados**: requieren Android Studio / Xcode (no disponibles en el

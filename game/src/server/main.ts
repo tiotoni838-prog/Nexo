@@ -14,6 +14,7 @@ import { loadPayPalConfig, PayPalClient, PayPalConfigError } from '../paypal/pay
 import { handleStatic } from './serve.js';
 import { AccountStore } from './accounts.js';
 import { handleApiRoutes } from './apiRoutes.js';
+import { initTelegramFromEnv } from './telegram.js';
 
 const loadDotEnv = (): void => {
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -97,6 +98,12 @@ if (!accounts) {
   console.log('[nexo] cuentas desactivadas: define NEXO_DATA_DIR para activar registro/login (ej. ./data)');
 } else {
   console.log('[nexo] cuentas activas: datos en', dataDir);
+}
+
+if (initTelegramFromEnv()) {
+  console.log('[nexo] avisos Telegram al propietario activos (banos, reportes, ventas)');
+} else {
+  console.log('[nexo] avisos Telegram desactivados: define TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID');
 }
 
 const adminToken = process.env.ADMIN_TOKEN ?? null;

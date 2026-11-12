@@ -4,7 +4,7 @@ Battle Royale original, competitivo y accesible. Este repositorio contiene la
 **especificación de ingeniería** (`NEXO_FRONTIER_MEGA_SPEC.part*`, 100.000 fichas de
 trabajo) y el **vertical slice jugable** en `game/`.
 
-## Qué hay implementado (v1.3.0, verificado)
+## Qué hay implementado (v1.4.0, verificado)
 
 - **Simulación autoritativa compartida** (`game/src/shared/`): movimiento con colisiones,
   **12 armas** con rarezas y daño inspirado en balística real (incluido **lanzacohetes
@@ -57,23 +57,23 @@ trabajo) y el **vertical slice jugable** en `game/`.
   (`ADMIN_TOKEN`) que consulta la API de transacciones de PayPal y muestra total USD,
   número de operaciones y desglose por artículo. Endpoint JSON: `/api/admin/earnings?days=N`.
 
-## Descargar y jugar (v1.3.0)
+## Descargar y jugar (v1.4.0)
 
 En la carpeta [`releases/`](releases/) del repo (o en `/download` del servidor de juego,
 con botones por plataforma):
 
-- **[NexoFPS-1.3.0-windows-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-windows-x64.zip)** —
+- **[NexoFPS-1.4.0-windows-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-windows-x64.zip)** —
   **aplicación nativa de Windows** (Electron 33): descomprime y ejecuta `nexo-fps.exe`.
-- **[NexoFPS-1.3.0-linux-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-linux-x64.zip)** —
+- **[NexoFPS-1.4.0-linux-x64.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-linux-x64.zip)** —
   **aplicación nativa de Linux**: descomprime y ejecuta `./nexo-fps`.
-- **NexoFPS-1.3.0-macos** — se genera con `cd game && npm run desktop`
+- **NexoFPS-1.4.0-macos** — se genera con `cd game && npm run desktop`
   (`dist-desktop/NexoFPS-darwin-x64` y `-arm64`); no se aloja en Git por superar los
   100 MB por archivo de GitHub.
-- **[NexoFPS-1.3.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-web-standalone.zip)** —
+- **[NexoFPS-1.4.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-web-standalone.zip)** —
   el juego completo en UN archivo HTML. Descomprime, abre `NexoFPS.html` con doble clic
   y juega contra bots sin internet. Windows / macOS / Linux. También funciona en el
   navegador del **teléfono** (controles táctiles + pantalla completa).
-- **[NexoFPS-1.3.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.3.0-servidor.zip)** —
+- **[NexoFPS-1.4.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-servidor.zip)** —
   servidor dedicado (Node.js 20+) con tienda PayPal y panel de ganancias.
 
 Android (APK) e iOS: el proyecto WebView nativo se empaqueta con Android Studio /
@@ -81,6 +81,19 @@ Xcode — instrucciones en `docs/OPERATIONS.md` (no se alojan binarios sin build
 verificada de esos IDE).
 
 Para anunciar el juego en **Discord**: guía y embed listos en [`discord/DISCORD.md`](discord/DISCORD.md).
+
+### Descargas por plataforma y avisos al dueño (v1.4.0)
+- **Página propia por plataforma**: `/download/windows`, `/download/linux`,
+  `/download/macos`, `/download/android`, `/download/ios`, `/download/web` y
+  `/download/servidor` — cada dispositivo con su forma de descarga paso a paso.
+- **Avisos Telegram al propietario**: ventas PayPal, reportes, canjes y baneos
+  llegan al bot de @BotFather (`TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` en `.env`);
+  sin credenciales el servidor funciona igual (no-op silencioso).
+- **Blueprint completo del servidor de Discord** (`discord/DISCORD.md`): canales,
+  roles, bots de IA, reglas, flujo de tickets/apelaciones y anuncio listo
+  (`discord/embed.json`).
+- **Lista viva de tareas del dueño** (`docs/TAREAS-DUENO.md`): credenciales que
+  faltan, suscripciones de tiendas y decisiones pendientes.
 
 ### Gráficos y entorno (v1.3.0)
 - **4 presets de calidad** (`game/src/shared/graphics.ts`): Baja (30 FPS), Media,
@@ -159,6 +172,7 @@ partida** (tu dispositivo hace de servidor P2P) o **Unirse** (WebSocket o P2P).
 - [docs/TRACEABILITY.md](docs/TRACEABILITY.md) — matriz requisitos ↔ código ↔ pruebas.
 - [docs/SECURITY.md](docs/SECURITY.md) — seguridad, privacidad, secretos, PayPal.
 - [docs/OPERATIONS.md](docs/OPERATIONS.md) — operación, límites y limitaciones honestas.
+- [docs/TAREAS-DUENO.md](docs/TAREAS-DUENO.md) — credenciales y tareas pendientes del propietario.
 - [docs/ROADMAP.md](docs/ROADMAP.md) — fases siguientes según la spec maestra.
 
 ## Estado honesto

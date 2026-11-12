@@ -2,6 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { downloadPagePath, renderDownloadPage } from './downloadPages.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
@@ -21,6 +22,12 @@ const MIME: Record<string, string> = {
  * Devuelve true si la petición fue atendida. Bloquea path traversal.
  */
 export const handleStatic = (req: http.IncomingMessage, res: http.ServerResponse, url: URL): boolean => {
+  const platform = downloadPagePath(url.pathname);
+  if (platform) {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.end(renderDownloadPage(platform, url.origin));
+    return true;
+  }
   const pathname = url.pathname === '/download' ? '/client/download.html' : url.pathname;
   const rel = pathname === '/' ? '/client/index.html' : pathname;
   const filePath = path.join(ROOT, path.normalize(rel).replace(/^(\.\.[/\\])+/, ''));
