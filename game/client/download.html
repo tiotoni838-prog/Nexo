@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nexo FPS — Descargar</title>
+<link rel="icon" type="image/svg+xml" href="/client/logo.svg" />
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; font-family: system-ui, sans-serif;
+    background: radial-gradient(1200px 700px at 50% -10%, #16233f 0%, #070b14 60%);
+    color: #e8eefc; padding: 28px;
+  }
+  img[alt="Nexo FPS"] { width: 96px; height: 96px; }
+  h1 { letter-spacing: 6px; margin-top: 10px; font-size: 30px; }
+  h1 small { display: block; letter-spacing: 2px; font-size: 12px; color: #8ea0c0; margin-top: 4px; }
+  p.ver { color: #38e1c8; font-size: 14px; margin-top: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 26px; max-width: 900px; width: 100%; }
+  a.dl {
+    display: flex; flex-direction: column; gap: 6px; padding: 18px;
+    border: 1px solid rgba(120,150,220,0.25); border-radius: 14px;
+    background: rgba(20,30,55,0.6); color: inherit; text-decoration: none;
+    font-weight: 700; font-size: 16px; transition: transform .12s ease, border-color .12s ease;
+  }
+  a.dl:hover { transform: translateY(-2px); border-color: rgba(56,225,200,0.7); }
+  a.dl.ready { border-color: rgba(56,225,200,0.5); }
+  a.dl.soon { opacity: 0.55; cursor: default; }
+  .icon { font-size: 30px; }
+  a.dl small { font-weight: 400; color: #8ea0c0; font-size: 12px; }
+  .note { max-width: 760px; margin-top: 26px; color: #8ea0c0; font-size: 13px; line-height: 1.6; text-align: center; }
+</style>
+</head>
+<body>
+  <img src="/client/logo.svg" alt="Nexo FPS" />
+  <h1>NEXO FPS<small>BATTLE ROYALE</small></h1>
+  <p class="ver">Versión 1.4.0 · Descargables nativos</p>
+  <div class="grid">
+    <a class="dl ready" href="/download/windows">
+      <span class="icon">🪟</span> Windows <small>Nativo (Electron) · página con instrucciones paso a paso</small>
+    </a>
+    <a class="dl ready" href="/download/linux">
+      <span class="icon">🐧</span> Linux <small>Nativo (Electron) · página con instrucciones paso a paso</small>
+    </a>
+    <a class="dl soon" href="/download/macos">
+      <span class="icon">🍎</span> macOS <small>Nativo (Electron) · se genera con `npm run desktop`</small>
+    </a>
+    <a class="dl soon" href="/download/android">
+      <span class="icon">🤖</span> APK Android <small>Página con la vía de descarga · Play Store al publicar</small>
+    </a>
+    <a class="dl soon" href="/download/ios">
+      <span class="icon">📱</span> iOS / iPhone <small>Página con la vía de descarga · App Store al publicar</small>
+    </a>
+    <a class="dl ready" href="/download/web">
+      <span class="icon">🎮</span> Un solo archivo <small>NexoFPS.html · doble clic y juega · también en el móvil</small>
+    </a>
+    <a class="dl ready" href="/download/servidor">
+      <span class="icon">🖥️</span> Servidor online <small>Node.js 20+ · tienda PayPal · avisos Telegram</small>
+    </a>
+  </div>
+  <p class="note">
+    Cada plataforma tiene <b>su propia página</b> con instrucciones paso a paso:
+    <code>/download/windows</code>, <code>/download/linux</code>, <code>/download/macos</code>,
+    <code>/download/android</code>, <code>/download/ios</code>, <code>/download/web</code> y
+    <code>/download/servidor</code>.<br />
+    En <b>teléfono</b> ya puedes jugar hoy: abre esta misma página en el navegador del móvil,
+    pulsa ⛶ pantalla completa en el menú y usa los controles táctiles.<br />
+    <b>macOS</b> se genera localmente con <code>cd game &amp;&amp; npm run desktop</code> (carpeta
+    <code>dist-desktop/</code>). El <b>APK</b> y <b>iOS</b> se generan con Android Studio / Xcode:
+    instrucciones en <b>docs/OPERATIONS.md</b>.
+  </p>
+</body>
+</html>

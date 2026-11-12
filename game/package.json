@@ -1,0 +1,29 @@
+{
+  "name": "nexo-frontier",
+  "version": "1.5.0",
+  "private": true,
+  "description": "NEXO: FRONTIER — vertical slice jugable de Battle Royale (cliente web + servidor autoritativo + host P2P + tienda PayPal server-side)",
+  "type": "module",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "server": "npm run build && node dist/server/main.js",
+    "client": "npm run build && node dist/server/serve.js",
+    "start": "npm run build && node dist/server/main.js",
+    "bundle": "node scripts/build-singlefile.mjs",
+    "desktop": "node scripts/build-desktop.mjs"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

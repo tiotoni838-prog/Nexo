@@ -1,0 +1,30 @@
+{
+  "username": "Nexo FPS",
+  "avatar_url": "https://raw.githubusercontent.com/tiotoni838-prog/Nexo/vibe/nexo-frontier-vertical-slice-951e24/game/client/logo.svg",
+  "content": "🎮 **NEXO FPS 1.1.0** — ¡Battle Royale disponible! ⬇️",
+  "embeds": [
+    {
+      "title": "Descargar Nexo FPS",
+      "description": "Battle Royale original con 12 armas, 3 mapas, 6 personajes con habilidades, Pase de Batalla, ruleta diaria gratis, tienda con Dalos y NX, armario y evolutivas.",
+      "color": 7238911,
+      "fields": [
+        {
+          "name": "🪟 Windows / 🍎 macOS / 🐧 Linux",
+          "value": "[Descargar ZIP — juega con doble clic](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-web-standalone.zip)",
+          "inline": false
+        },
+        {
+          "name": "🖥️ Servidor online",
+          "value": "[Descargar servidor (Node.js 20+)](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.4.0-servidor.zip)",
+          "inline": false
+        },
+        {
+          "name": "📱 Android / iOS",
+          "value": "Juega ya desde el navegador del móvil (pantalla completa + táctil). APK e iOS nativos: próximamente.",
+          "inline": false
+        }
+      ],
+      "footer": { "text": "Nexo FPS · Battle Royale · Sin pay-to-win" }
+    }
+  ]
+}
