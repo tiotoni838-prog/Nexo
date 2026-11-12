@@ -19,7 +19,7 @@ export interface StoreItem {
   priceNx?: number;
   priceDalos?: number;
   currency: StoreCurrency;
-  kind: 'skin' | 'emote' | 'trail' | 'banner' | 'dalo-pack';
+  kind: 'skin' | 'emote' | 'trail' | 'banner' | 'spray' | 'paracaidas' | 'marco' | 'insignia' | 'mascota' | 'dalo-pack';
   rarity: 'raro' | 'epico' | 'legendario';
 }
 
@@ -175,6 +175,96 @@ export const STORE_CATALOG: StoreItem[] = [
     priceDalos: 600,
     currency: 'DALO',
     kind: 'emote',
+    rarity: 'legendario',
+  },
+  {
+    sku: 'nx-spray-nexo',
+    nameEs: 'Spray: Logotipo Nexo',
+    nameEn: 'Spray: Nexo Logo',
+    priceNx: 250,
+    currency: 'NX',
+    kind: 'spray',
+    rarity: 'raro',
+  },
+  {
+    sku: 'dalo-spray-dragon',
+    nameEs: 'Spray: Dragón de Dalos',
+    nameEn: 'Spray: Dalos Dragon',
+    priceDalos: 180,
+    currency: 'DALO',
+    kind: 'spray',
+    rarity: 'epico',
+  },
+  {
+    sku: 'nx-paracaidas-aurora',
+    nameEs: 'Paracaídas: Aurora',
+    nameEn: 'Parachute: Aurora',
+    priceNx: 700,
+    currency: 'NX',
+    kind: 'paracaidas',
+    rarity: 'epico',
+  },
+  {
+    sku: 'dalo-paracaidas-fenix',
+    nameEs: 'Paracaídas: Fénix Ardiente',
+    nameEn: 'Parachute: Blazing Phoenix',
+    priceDalos: 320,
+    currency: 'DALO',
+    kind: 'paracaidas',
+    rarity: 'legendario',
+  },
+  {
+    sku: 'nx-marco-bronce',
+    nameEs: 'Marco: Bronce Nexo',
+    nameEn: 'Frame: Nexo Bronze',
+    priceNx: 200,
+    currency: 'NX',
+    kind: 'marco',
+    rarity: 'raro',
+  },
+  {
+    sku: 'dalo-marco-diamante',
+    nameEs: 'Marco: Diamante Puro',
+    nameEn: 'Frame: Pure Diamond',
+    priceDalos: 280,
+    currency: 'DALO',
+    kind: 'marco',
+    rarity: 'epico',
+  },
+  {
+    sku: 'nx-insignia-lobo',
+    nameEs: 'Insignia: Lobo de Acero',
+    nameEn: 'Badge: Steel Wolf',
+    priceNx: 350,
+    currency: 'NX',
+    kind: 'insignia',
+    rarity: 'raro',
+  },
+  {
+    sku: 'dalo-insignia-corona',
+    nameEs: 'Insignia: Corona Nexo',
+    nameEn: 'Badge: Nexo Crown',
+    priceDalos: 450,
+    currency: 'DALO',
+    kind: 'insignia',
+    rarity: 'legendario',
+  },
+  {
+    sku: 'nx-mascota-dron',
+    nameEs: 'Mascota: Dron Chispa',
+    nameEn: 'Pet: Spark Drone',
+    priceNx: 900,
+    currency: 'NX',
+    kind: 'mascota',
+    rarity: 'epico',
+  },
+  {
+    sku: 'dalo-mascota-fenix',
+    nameEs: 'Mascota: Fénix Bebé',
+    nameEn: 'Pet: Baby Phoenix',
+    priceDalos: 500,
+    currency: 'DALO',
+    kind: 'mascota',
     rarity: 'legendario',
   },
 ];

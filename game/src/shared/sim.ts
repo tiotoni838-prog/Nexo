@@ -19,6 +19,7 @@ import {
   type Rect,
   type MapPresetId,
 } from './map.js';
+import { GAME_MODES, isGameModeId, type GameModeId } from './gameModes.js';
 import {
   emptyInventory,
   resetItemIds,
@@ -149,6 +150,7 @@ export interface MatchConfig {
   botCount: number;
   dropPhaseMs: number;
   mapId?: MapPresetId;
+  modeId?: GameModeId;
 }
 
 const BOT_NAMES_ES = [
@@ -205,6 +207,7 @@ export class MatchSim {
   airdropTimerMs = 45_000;
   events: SimEvent[] = [];
   dropEndsAtMs: number;
+  mode: (typeof GAME_MODES)[GameModeId];
   winnerId: number | null = null;
   private rng: Rng;
   private nextPlayerId = 1;
@@ -218,6 +221,7 @@ export class MatchSim {
     this.seed = config.seed;
     this.rng = new Rng(config.seed ^ 0x5f3759df);
     this.map = generateMap(config.seed, config.mapId ?? 'nexo-urbano');
+    this.mode = isGameModeId(config.modeId) ? GAME_MODES[config.modeId] : GAME_MODES.solo;
     this.zone = initialZone(this.rng);
     this.dropEndsAtMs = config.dropPhaseMs;
     resetItemIds();
@@ -228,6 +232,14 @@ export class MatchSim {
     }
     for (const s of this.map.lootSpawns) {
       if (this.rng.chance(0.6)) this.items.push(spawnLootAt(this.rng, s));
+    }
+    if (this.mode.allowedWeapons) {
+      const allowed = this.mode.allowedWeapons;
+      for (const item of this.items) {
+        if (item.kind === 'weapon' && item.weaponId && !allowed.includes(item.weaponId)) {
+          item.weaponId = allowed[Math.floor(this.rng.next() * allowed.length)]!;
+        }
+      }
     }
     for (let i = 0; i < config.botCount; i++) {
       this.addBot(`BOT ${BOT_NAMES_ES[i % BOT_NAMES_ES.length]}`);
@@ -872,7 +884,7 @@ export class MatchSim {
         this.spawnAirdrop();
       }
 
-      updateZone(this.zone, dtMs, this.rng);
+      updateZone(this.zone, dtMs * this.mode.zoneSpeedMult, this.rng);
       const dps = zoneDps(this.zone);
       for (const p of this.players) {
         if (!p.alive) continue;

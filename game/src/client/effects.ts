@@ -13,6 +13,11 @@ export interface Particle {
 export class ParticleSystem {
   private particles: Particle[] = [];
   private rings: Array<{ x: number; y: number; r: number; maxR: number; lifeMs: number; maxLifeMs: number; color: string }> = [];
+  maxParticles = 600;
+
+  setMaxParticles(cap: number): void {
+    this.maxParticles = Math.max(0, cap);
+  }
 
   get count(): number {
     return this.particles.length;
@@ -39,7 +44,9 @@ export class ParticleSystem {
         glow: opts.glow ?? false,
       });
     }
-    if (this.particles.length > 600) this.particles.splice(0, this.particles.length - 600);
+    if (this.particles.length > this.maxParticles) {
+      this.particles.splice(0, this.particles.length - this.maxParticles);
+    }
   }
 
   ring(x: number, y: number, maxR: number, lifeMs: number, color: string): void {

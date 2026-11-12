@@ -4,7 +4,7 @@ Battle Royale original, competitivo y accesible. Este repositorio contiene la
 **especificación de ingeniería** (`NEXO_FRONTIER_MEGA_SPEC.part*`, 100.000 fichas de
 trabajo) y el **vertical slice jugable** en `game/`.
 
-## Qué hay implementado (v1.1.0, verificado)
+## Qué hay implementado (v1.2.0, verificado)
 
 - **Simulación autoritativa compartida** (`game/src/shared/`): movimiento con colisiones,
   **12 armas** con rarezas y daño inspirado en balística real (incluido **lanzacohetes
@@ -57,21 +57,21 @@ trabajo) y el **vertical slice jugable** en `game/`.
   (`ADMIN_TOKEN`) que consulta la API de transacciones de PayPal y muestra total USD,
   número de operaciones y desglose por artículo. Endpoint JSON: `/api/admin/earnings?days=N`.
 
-## Descargar y jugar (v1.1.0)
+## Descargar y jugar (v1.2.0)
 
 En la carpeta [`releases/`](releases/) del repo (o en `/download` del servidor de juego,
 con botones por plataforma):
 
-- **[NexoFPS-1.1.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.1.0-web-standalone.zip)** —
+- **[NexoFPS-1.2.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.2.0-web-standalone.zip)** —
   el juego completo en UN archivo HTML. Descomprime, abre `NexoFPS.html` con doble clic
   y juega contra bots sin internet. Windows / macOS / Linux. También funciona en el
   navegador del **teléfono** (controles táctiles + pantalla completa).
-- **[NexoFPS-1.1.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.1.0-servidor.zip)** —
+- **[NexoFPS-1.2.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.2.0-servidor.zip)** —
   servidor dedicado (Node.js 20+) con tienda PayPal y panel de ganancias.
 
 Para anunciar el juego en **Discord**: guía y embed listos en [`discord/DISCORD.md`](discord/DISCORD.md).
 
-### Meta-juego (v1.1.0)
+### Meta-juego (v1.2.0)
 - **Monedas**: **Dalos** (se compran con PayPal, 4 paquetes con bono) y **NX** (se ganan
   jugando: kills + posición). Todo cosmético, sin pay-to-win.
 - **Pase de Batalla** Temporada 1: 30 niveles, ruta gratis + premium (950 Dalos),
@@ -79,6 +79,27 @@ Para anunciar el juego en **Discord**: guía y embed listos en [`discord/DISCORD
 - **Ruleta**: 1 giro gratis cada 24 h, giros extra con Dalos, probabilidades visibles.
 - **Armario**: equipa skins, estelas, banners y gestos conseguidos.
 - **Evolutivas**: maestría por personaje con títulos (Novato → Leyenda).
+- **Cuentas** (`NEXO_DATA_DIR` en el servidor): registro/login con correo y contraseña
+  (scrypt + sesiones de 30 días), **verificación en dos pasos TOTP**, baneos, reportes,
+  perfil y estadísticas persistentes.
+- **Social**: amigos, clanes con moneda de clan, tabla de clasificación por campo
+  (bajas, victorias, partidas, Top 5, puntos RR) y sistema de reportes.
+- **Misiones**: 3 diarias rotativas + 4 semanales con reclamo de recompensas;
+  **logros** con progreso acumulado; **login diario** con ciclo de 7 días (premio
+  grande el día 7).
+- **Rangos clasificatorios**: Bronce → Plata → Oro → Platino → Diamante → Nexo,
+  con puntos RR por kills, posición y victoria (modo Clasificatorio).
+- **10 modos de juego**: Solo, Dúo, Escuadrón, Clasificatorio, **Rápido** (zona 2.2×),
+  **Solo Pistolas** (lista blanca real de armas), Infectados, TDM, **Práctica** (zona
+  0.5×) y Creativo. Los implementados cambian la simulación real; el resto está en el
+  ROADMAP y se marca "(pronto)" en el menú.
+- **Economía extendida**: **fragmentos** por partida para fabricar objetos por rareza,
+  **VIP** (bonus NX + Dalos diarios) y **códigos de canje** con cooldown y usos.
+- **Cosméticos ampliados**: skins, estelas, banners, gestos, **sprays, paracaídas,
+  marcos de perfil, insignias y mascotas** (9 slots de armario).
+- **Ajustes completos**: gráficos (calidad con tope de DPR y partículas, tope de FPS,
+  sombras, brillo), sonido (volumen general/música/efectos), juego (modo daltónico,
+  indicadores de daño), red (región, ahorro de datos) y controles remapeables.
 
 Para generar el standalone localmente: `cd game && npm run bundle`.
 

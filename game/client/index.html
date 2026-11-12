@@ -14,6 +14,10 @@
       <img id="menuLogo" src="/client/logo.svg" alt="Nexo FPS" width="120" height="120" />
       <h1 class="logo">NEXO<span> FPS</span></h1>
       <p id="subtitle" class="subtitle"></p>
+            <div id="authChip" class="auth-chip hidden">
+        <span id="authChipName"></span>
+        <button id="authChipLogout" class="btn tiny">Salir</button>
+      </div>
       <p id="nxBalance" class="nx-balance"></p>
       <div id="updateBanner" class="update-banner hidden">
         <span id="updateText"></span>
@@ -26,6 +30,10 @@
         <button class="tab-btn" data-tab="pase">🎖️ Pase</button>
         <button class="tab-btn" data-tab="ruleta">🎡 Ruleta</button>
         <button class="tab-btn" data-tab="armario">👕 Armario</button>
+        <button class="tab-btn" data-tab="misiones">📋 Misiones</button>
+        <button class="tab-btn" data-tab="logros">🏆 Logros</button>
+        <button class="tab-btn" data-tab="social">👥 Social</button>
+        <button class="tab-btn" data-tab="codigos">🎁 Códigos</button>
       </div>
       <div id="panel-jugar" class="menu-panel">
       <div class="menu-card">
@@ -33,6 +41,8 @@
         <input id="playerName" maxlength="16" value="Jugador" autocomplete="off" />
         <label for="selCharacter" data-i18n="character"></label>
         <select id="selCharacter"></select>
+        <label for="selMode">Modo de juego</label>
+        <select id="selMode"></select>
         <div class="btn-col">
           <button id="btnSolo" class="btn primary" data-i18n="playSolo"></button>
           <button id="btnHost" class="btn" data-i18n="hostOnline"></button>
@@ -59,6 +69,7 @@
           <button id="btnCopyAnswer" class="btn small" data-i18n="copy"></button>
         </div>
         <button id="btnSettings" class="btn small" data-i18n="settings"></button>
+        <button id="btnAccount" class="btn small">👤 Cuenta</button>
       </div>
       </div>
 
@@ -88,13 +99,85 @@
 
       <div id="armario" class="menu-panel hidden">
         <div class="menu-card">
+          <p id="lockerFragments" class="nx-balance"></p>
           <div id="lockerGrid" class="locker-grid"></div>
           <h3>Tu colección</h3>
           <div id="lockerInventory" class="store-grid"></div>
           <div id="masteryList"></div>
         </div>
       </div>
+      <div id="misiones" class="menu-panel hidden">
+        <div class="menu-card">
+          <button id="btnClaimDaily" class="btn primary"></button>
+          <div id="dailyLoginCycle" class="daily-cycle"></div>
+          <div id="dailyMissions"></div>
+          <div id="weeklyMissions"></div>
+        </div>
+      </div>
+
+      <div id="logros" class="menu-panel hidden">
+        <div class="menu-card">
+          <h3>Rangos</h3>
+          <div id="rankDisplay" class="rank-display"></div>
+          <h3>Logros</h3>
+          <div id="achievementsList"></div>
+        </div>
+      </div>
+
+      <div id="social" class="menu-panel hidden">
+        <div class="menu-card">
+          <div id="socialContent"></div>
+          <h3>Clasificación</h3>
+          <div class="row">
+            <select id="selLbField">
+              <option value="kills">Bajas</option>
+              <option value="wins">Victorias</option>
+              <option value="matches">Partidas</option>
+              <option value="top5">Top 5</option>
+              <option value="rankedPoints">Puntos RR</option>
+            </select>
+          </div>
+          <div id="leaderboardList" class="leaderboard"></div>
+        </div>
+      </div>
+
+      <div id="codigos" class="menu-panel hidden">
+        <div class="menu-card">
+          <p class="muted">Códigos de canje de redes sociales y eventos.</p>
+          <div class="row">
+            <input id="inRedeemCode" placeholder="NEXO-2025" />
+            <button id="btnRedeem" class="btn primary">Canjear</button>
+          </div>
+          <p id="redeemMsg" class="muted"></p>
+        </div>
+      </div>
       <p class="footnote">Servidor autoritativo · Cosméticos únicamente · Sin pay-to-win</p>
+    </section>
+
+
+    <!-- Login / registro -->
+    <section id="auth" class="screen hidden">
+      <img src="/client/logo.svg" alt="Nexo FPS" width="80" height="80" />
+      <h2>Cuenta Nexo</h2>
+      <div class="menu-card">
+        <label for="authEmail">Correo</label>
+        <input id="authEmail" type="email" autocomplete="email" />
+        <label for="authPass">Contraseña</label>
+        <input id="authPass" type="password" autocomplete="current-password" />
+        <div id="authTotpRow" class="row hidden">
+          <label for="authTotp">Código 2 pasos</label>
+          <input id="authTotp" inputmode="numeric" maxlength="6" />
+        </div>
+        <label for="authName">Nombre de jugador (solo registro)</label>
+        <input id="authName" maxlength="16" value="Jugador" />
+        <p id="authMsg" class="muted"></p>
+        <div class="btn-col">
+          <button id="btnAuthLogin" class="btn primary">Iniciar sesión</button>
+          <button id="btnAuthRegister" class="btn">Crear cuenta</button>
+          <button id="btnAuthLogout" class="btn small">Cerrar sesión</button>
+          <button id="btnBackAuth" class="btn small">Volver</button>
+        </div>
+      </div>
     </section>
 
     <!-- Ajustes -->
@@ -128,6 +211,74 @@
         <div class="row">
           <label for="chkWings" data-i18n="wings"></label>
           <input type="checkbox" id="chkWings" checked />
+        </div>
+        <h3>Gráficos</h3>
+        <div class="row">
+          <label for="selQuality">Calidad</label>
+          <select id="selQuality">
+            <option value="bajo">Bajo</option>
+            <option value="medio">Medio</option>
+            <option value="alto">Alto</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="selFps">Tope de FPS</label>
+          <select id="selFps">
+            <option value="30">30</option>
+            <option value="60">60</option>
+            <option value="120">120</option>
+            <option value="240">240</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="chkShadows">Sombras y brillos</label>
+          <input type="checkbox" id="chkShadows" checked />
+        </div>
+        <div class="row">
+          <label for="rngBrightness">Brillo</label>
+          <input type="range" id="rngBrightness" min="0.6" max="1.4" step="0.05" value="1" />
+        </div>
+        <h3>Sonido</h3>
+        <div class="row">
+          <label for="rngVolMaster">Volumen general</label>
+          <input type="range" id="rngVolMaster" min="0" max="1" step="0.05" value="0.8" />
+        </div>
+        <div class="row">
+          <label for="rngVolMusic">Música</label>
+          <input type="range" id="rngVolMusic" min="0" max="1" step="0.05" value="0.6" />
+        </div>
+        <div class="row">
+          <label for="rngVolSfx">Efectos</label>
+          <input type="range" id="rngVolSfx" min="0" max="1" step="0.05" value="1" />
+        </div>
+        <h3>Juego</h3>
+        <div class="row">
+          <label for="selColorblind">Modo daltónico</label>
+          <select id="selColorblind">
+            <option value="off">Desactivado</option>
+            <option value="protanopia">Protanopía</option>
+            <option value="deuteranopia">Deuteranopía</option>
+            <option value="tritanopia">Tritanopía</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="chkDamage">Indicadores de daño</label>
+          <input type="checkbox" id="chkDamage" checked />
+        </div>
+        <h3>Red</h3>
+        <div class="row">
+          <label for="selRegion">Región</label>
+          <select id="selRegion">
+            <option value="auto">Automático</option>
+            <option value="america-sur">América del Sur</option>
+            <option value="america-norte">América del Norte</option>
+            <option value="europa">Europa</option>
+            <option value="asia">Asia</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="chkDataSaver">Ahorro de datos</label>
+          <input type="checkbox" id="chkDataSaver" />
         </div>
         <h3 data-i18n="keybinds"></h3>
         <div id="keybindList" class="keybind-list"></div>

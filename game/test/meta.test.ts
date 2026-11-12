@@ -154,7 +154,18 @@ describe('economía de Dalos', () => {
     expect(STORE_CATALOG.some((i) => i.currency === 'NX')).toBe(true);
     expect(STORE_CATALOG.some((i) => i.currency === 'DALO')).toBe(true);
     for (const item of STORE_CATALOG) {
-      expect(['skin', 'emote', 'trail', 'banner', 'dalo-pack']).toContain(item.kind);
+      expect([
+        'skin',
+        'emote',
+        'trail',
+        'banner',
+        'spray',
+        'paracaidas',
+        'marco',
+        'insignia',
+        'mascota',
+        'dalo-pack',
+      ]).toContain(item.kind);
     }
   });
 });

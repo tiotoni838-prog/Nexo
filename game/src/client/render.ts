@@ -32,6 +32,16 @@ export class Renderer {
   private timeMs = 0;
   private lastPositions = new Map<number, { x: number; y: number }>();
   private moveSpeeds = new Map<number, number>();
+  dprCap = 3;
+  shadows = true;
+  brightness = 1;
+
+  setQuality(dprCap: number, shadows: boolean, brightness: number): void {
+    this.dprCap = dprCap;
+    this.shadows = shadows;
+    this.brightness = brightness;
+    this.resize();
+  }
 
   addShake(ms: number, intensity: number): void {
     this.shakeMs = Math.max(this.shakeMs, ms);
@@ -46,7 +56,7 @@ export class Renderer {
   }
 
   resize(): void {
-    this.dpr = Math.min(window.devicePixelRatio || 1, 3);
+    this.dpr = Math.min(window.devicePixelRatio || 1, this.dprCap);
     const rect = this.canvas.getBoundingClientRect();
     this.canvas.width = Math.round(rect.width * this.dpr);
     this.canvas.height = Math.round(rect.height * this.dpr);
@@ -62,6 +72,8 @@ export class Renderer {
   render(state: RenderState): void {
     const { ctx, canvas } = this;
     const snap = state.snapshot;
+    if (this.brightness !== 1) ctx.filter = `brightness(${this.brightness})`;
+    else ctx.filter = 'none';
     ctx.fillStyle = state.map?.palette.sky ?? '#0a0e17';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (!snap || !state.map) return;
@@ -129,7 +141,7 @@ export class Renderer {
       const hpx = wall.h * zoom;
       ctx.save();
       ctx.shadowColor = '#7de8ff';
-      ctx.shadowBlur = 12 * this.dpr;
+      ctx.shadowBlur = this.shadows ? 12 * this.dpr : 0;
       const gradient = ctx.createLinearGradient(sx, sy, sx + wpx, sy + hpx);
       gradient.addColorStop(0, 'rgba(125, 232, 255, 0.85)');
       gradient.addColorStop(0.5, 'rgba(56, 189, 248, 0.6)');
@@ -279,7 +291,7 @@ export class Renderer {
       const size = (legendary ? 13 : 9) * zoom * this.dpr * 0.5;
       if (legendary) {
         ctx.shadowColor = color;
-        ctx.shadowBlur = 14 * this.dpr;
+        ctx.shadowBlur = this.shadows ? 14 * this.dpr : 0;
       }
       ctx.save();
       ctx.translate(sx, sy);
@@ -298,7 +310,7 @@ export class Renderer {
     const { ctx } = this;
     ctx.strokeStyle = '#ffd47a';
     ctx.shadowColor = '#f2b632';
-    ctx.shadowBlur = 6 * this.dpr;
+    ctx.shadowBlur = this.shadows ? 6 * this.dpr : 0;
     ctx.lineWidth = 2 * this.dpr;
     ctx.beginPath();
     for (const b of snap.bullets) {
@@ -353,7 +365,7 @@ export class Renderer {
       if (p.abilityActive) {
         ctx.strokeStyle = charColor;
         ctx.shadowColor = charColor;
-        ctx.shadowBlur = 10 * this.dpr;
+        ctx.shadowBlur = this.shadows ? 10 * this.dpr : 0;
         ctx.lineWidth = 2 * this.dpr;
         ctx.beginPath();
         ctx.arc(sx, sy, r * 1.5 + Math.sin(this.timeMs / 100) * 2 * this.dpr, 0, Math.PI * 2);

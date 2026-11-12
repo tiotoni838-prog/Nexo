@@ -46,6 +46,29 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 | Sistema de actualizaciones en el cliente | `shared/version.ts`, `/api/version`, banner "Actualizar" en menú | `test/content.test.ts` (versión semántica) | ídem |
 | Logo y branding Nexo FPS | `client/logo.svg` (SVG original), favicon, menú con fondo animado | manual (visual) | — |
 
+## v1.2.0 — expansión de meta-juego, cuentas y social
+
+| Función | Implementación | Verificación | Evidencia |
+|---|---|---|---|
+| Cuentas: registro/login, scrypt, sesiones 30 días | `server/accounts.ts` (AccountStore, persistencia JSON atómica) | `test/accounts.test.ts` (24 tests) | `npm test` 104/104 ✓ |
+| Verificación en dos pasos TOTP (RFC 6238) | `server/accounts.ts` enableTotp/confirmTotp, endpoints `/api/profile/totp[/confirm]` | `test/accounts.test.ts` flujo TOTP | ídem |
+| Baneos y reportes | `server/accounts.ts` ban/unban/fileReport, `/api/reports` | `test/accounts.test.ts` | ídem |
+| Amigos, clanes con moneda de clan | `server/accounts.ts` addFriend/createClan/addClanCoins, `/api/social/*` | `test/accounts.test.ts` | ídem |
+| Tabla de clasificación por campo | `server/accounts.ts` leaderboard, `/api/leaderboard?field=` | `test/accounts.test.ts` | ídem |
+| Códigos de canje con cooldown + usos únicos | `server/accounts.ts` addRedeemCode/redeem, `meta/economy.ts` validateRedeemCode | `test/accounts.test.ts` | ídem |
+| Misiones diarias rotativas + semanales + reclamo | `meta/progression.ts` (dailyMissionsFor, recordMatchInMissions, claimMissionReward) | `test/accounts.test.ts` | ídem |
+| Logros con progreso acumulado | `meta/progression.ts` ACHIEVEMENTS/achievementProgress | `test/accounts.test.ts` | ídem |
+| Login diario con ciclo de 7 días (premio día 7) | `meta/progression.ts` DAILY_LOGIN_CYCLE, `server/accounts.ts` claimDailyLogin | `test/accounts.test.ts` | ídem |
+| Rangos clasificatorios (Bronce→Nexo) + puntos RR | `meta/progression.ts` RANK_TIERS/rankedPointsDelta | `test/accounts.test.ts` | ídem |
+| VIP (bonus NX + Dalos diarios) | `meta/economy.ts` (VIP_*, vipIsActive/vipNxBonus) | `test/accounts.test.ts` | ídem |
+| Fragmentos por partida + fabricación por rareza | `meta/economy.ts` FRAGMENTS_TO_CRAFT_RARITY/craftItem | `test/accounts.test.ts` | ídem |
+| 10 modos de juego; implementados cambian la sim real | `shared/gameModes.ts`, `sim.ts` (zoneSpeedMult, lista blanca de armas), `gameServer.ts` (modeId) | `test/accounts.test.ts` (zona rápida, lista blanca) | ídem |
+| Pantalla de login/registro + TOTP en cliente | `client/auth.ts`, sección `#auth` en `client/index.html` | manual | — |
+| Pestañas Misiones/Logros/Social/Códigos + login diario | `client/meta.ts` (renderMisiones/renderLogros/renderSocial/renderCodigos), `client/index.html` | manual | — |
+| Ajustes: gráficos/sonido/juego/red | `client/settings.ts` (calidad→DPR+partículas, FPS, sombras, brillo, volúmenes, daltónico, región, ahorro de datos), wiring en `client/main.ts` | `npm run build` ✓ | — |
+| Cosméticos: sprays, paracaídas, marcos, insignias, mascotas | `shared/locker.ts` (9 slots), `paypal/store.ts` (10 artículos nuevos en NX/Dalos) | `test/paypal.test.ts` + `test/meta.test.ts` (catálogo) | ídem |
+| Volumen general/música/efectos aplicado a SFX | `client/audio.ts` setVolumes/scaled | manual | — |
+
 ## Bloqueos registrados
 
 1. **Builds nativos (APK/AAB, instaladores)**: sin toolchain Android/iOS/Electron en el

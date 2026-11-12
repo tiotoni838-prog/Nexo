@@ -32,7 +32,7 @@ const logoSvg = fs.readFileSync(path.join(clientDir, 'logo.svg'));
 
 const logoDataUri = `data:image/svg+xml;base64,${logoSvg.toString('base64')}`;
 html = html.replace(/<link rel="icon"[^>]*>/, `<link rel="icon" href="${logoDataUri}" />`);
-html = html.replace('src="/client/logo.svg"', `src="${logoDataUri}"`);
+html = html.replaceAll('src="/client/logo.svg"', `src="${logoDataUri}"`);
 html = html.replace(
   /<link rel="stylesheet" href="\/client\/styles\.css" \/>/,
   `<style>\n${css}\n</style>`,

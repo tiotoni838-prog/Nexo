@@ -12,6 +12,8 @@ import { handleAdminRoutes } from '../paypal/adminRoutes.js';
 import { EarningsService } from '../paypal/earnings.js';
 import { loadPayPalConfig, PayPalClient, PayPalConfigError } from '../paypal/paypalClient.js';
 import { handleStatic } from './serve.js';
+import { AccountStore } from './accounts.js';
+import { handleApiRoutes } from './apiRoutes.js';
 
 const loadDotEnv = (): void => {
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -89,6 +91,14 @@ if (!store.available) {
   console.log('[nexo] tienda PayPal activa (credenciales cargadas del entorno)');
 }
 
+const dataDir = process.env.NEXO_DATA_DIR ?? null;
+const accounts = dataDir ? new AccountStore(path.join(dataDir, 'accounts.json')) : null;
+if (!accounts) {
+  console.log('[nexo] cuentas desactivadas: define NEXO_DATA_DIR para activar registro/login (ej. ./data)');
+} else {
+  console.log('[nexo] cuentas activas: datos en', dataDir);
+}
+
 const adminToken = process.env.ADMIN_TOKEN ?? null;
 let earnings: EarningsService | null = null;
 if (store.available && adminToken) {
@@ -115,6 +125,7 @@ const healthServer = http.createServer((req, res) => {
 
   if (handleStoreRoutes(req, res, url, store)) return;
   if (handleAdminRoutes(req, res, url, { earnings, adminToken })) return;
+  if (handleApiRoutes(req, res, url, { accounts })) return;
   if (handleStatic(req, res, url)) return;
 
   if (url.pathname === '/health') {

@@ -3,7 +3,18 @@ import { WsTransport, ClientNet, type Transport } from './net.js';
 import { P2PHost, P2PGuest } from './p2p.js';
 import { Renderer, type RenderState } from './render.js';
 import { Sfx } from './audio.js';
-import { loadSettings, saveSettings, applySettingsToDom, applyI18n, keyLabel, type Settings } from './settings.js';
+import {
+  loadSettings,
+  saveSettings,
+  applySettingsToDom,
+  applyI18n,
+  keyLabel,
+  QUALITY_DPR_CAP,
+  QUALITY_PARTICLES,
+  type Settings,
+} from './settings.js';
+import { initAuthScreen } from './auth.js';
+import { GAME_MODES, isGameModeId, type GameModeId } from '../shared/gameModes.js';
 import { t } from '../shared/i18n.js';
 import { WEAPONS } from '../shared/weapons.js';
 import { CHARACTERS, CHARACTER_IDS, type CharacterId } from '../shared/characters.js';
@@ -40,6 +51,7 @@ let firing = false;
 let slideQueued = false;
 let proneToggle = false;
 let selectedCharacter: CharacterId = 'aurora';
+let selectedMode: GameModeId = 'solo';
 let killFeedTimers: number[] = [];
 
 const refreshNxBalanceUi = (): void => {
@@ -83,6 +95,13 @@ void checkForUpdates();
 const renderer = new Renderer($('canvas') as HTMLCanvasElement);
 const sfx = new Sfx();
 let spectateId: number | undefined;
+
+const applyRenderQuality = (): void => {
+  renderer.setQuality(QUALITY_DPR_CAP[settings.quality], settings.shadows, settings.brightness);
+  renderer.particles.setMaxParticles(QUALITY_PARTICLES[settings.quality]);
+  sfx.setVolumes(settings.volMaster, settings.volMusic, settings.volSfx);
+};
+applyRenderQuality();
 
 const showScreen = (id: 'menu' | 'settings' | 'game'): void => {
   for (const s of ['menu', 'settings', 'game']) {
@@ -144,6 +163,7 @@ const startLocalServer = (botCount: number, online: boolean): GameServer => {
     botCount,
     minPlayersToStart: online ? 2 : 1,
     autoStartLobbyMs: online ? 8000 : 500,
+    modeId: selectedMode,
   });
   const connId = 1;
   const connection: Connection = {
@@ -581,10 +601,11 @@ bindTouchButton('btnProne', () => {
 });
 
 let lastInputSent = 0;
+const inputIntervalMs = (): number => (settings.dataSaver ? 66 : 33);
 const sendInputLoop = (): void => {
   if (!net || mode === 'menu') return;
   const now = performance.now();
-  if (now - lastInputSent >= 33) {
+  if (now - lastInputSent >= inputIntervalMs()) {
     lastInputSent = now;
     let mx = 0;
     let my = 0;
@@ -605,10 +626,16 @@ const sendInputLoop = (): void => {
 
 // ---------- Bucle de render ----------
 let lastFrame = performance.now();
+let lastFpsFrame = 0;
 const renderLoop = (): void => {
   const now = performance.now();
   const dt = now - lastFrame;
   lastFrame = now;
+  if (settings.fpsCap < 240 && now - lastFpsFrame < 1000 / settings.fpsCap - 1) {
+    requestAnimationFrame(renderLoop);
+    return;
+  }
+  lastFpsFrame = now;
   if (mode !== 'menu' && localServer) {
     localServer.update(dt);
   }
@@ -705,6 +732,103 @@ $('chkSubs').addEventListener('change', () => {
   settings.subtitles = $input('chkSubs').checked;
   saveSettings(settings);
 });
+
+const selMode = $<HTMLSelectElement>('selMode');
+for (const id of Object.keys(GAME_MODES) as GameModeId[]) {
+  const def = GAME_MODES[id];
+  const opt = document.createElement('option');
+  opt.value = id;
+  opt.textContent = `${def.nameEs}${def.implemented ? '' : ' (pronto)'}`;
+  selMode.appendChild(opt);
+}
+selMode.value = selectedMode;
+selMode.addEventListener('change', () => {
+  const value = selMode.value;
+  if (isGameModeId(value)) selectedMode = value;
+  saveSettings({ ...settings });
+});
+
+const bindSelect = <T extends string | number>(
+  id: string,
+  get: () => T,
+  set: (value: string) => void,
+): void => {
+  const el = $<HTMLSelectElement>(id);
+  el.value = String(get());
+  el.addEventListener('change', () => {
+    set(el.value);
+    saveSettings(settings);
+  });
+};
+
+bindSelect('selQuality', () => settings.quality, (v) => {
+  settings.quality = v as Settings['quality'];
+  applyRenderQuality();
+});
+bindSelect('selFps', () => settings.fpsCap, (v) => {
+  settings.fpsCap = Number(v);
+});
+bindSelect('selColorblind', () => settings.colorblind, (v) => {
+  settings.colorblind = v as Settings['colorblind'];
+  applySettingsToDom(settings);
+});
+bindSelect('selRegion', () => settings.region, (v) => {
+  settings.region = v;
+});
+
+const bindCheck = (id: string, get: () => boolean, set: (value: boolean) => void): void => {
+  const el = $<HTMLInputElement>(id);
+  el.checked = get();
+  el.addEventListener('change', () => {
+    set(el.checked);
+    saveSettings(settings);
+  });
+};
+
+bindCheck('chkShadows', () => settings.shadows, (v) => {
+  settings.shadows = v;
+  applyRenderQuality();
+});
+bindCheck('chkDamage', () => settings.damageIndicators, (v) => {
+  settings.damageIndicators = v;
+});
+bindCheck('chkDataSaver', () => settings.dataSaver, (v) => {
+  settings.dataSaver = v;
+});
+
+const bindRange = (id: string, get: () => number, set: (value: number) => void): void => {
+  const el = $<HTMLInputElement>(id);
+  el.value = String(get());
+  el.addEventListener('input', () => {
+    set(Number(el.value));
+    saveSettings(settings);
+  });
+};
+
+bindRange('rngBrightness', () => settings.brightness, (v) => {
+  settings.brightness = v;
+  applyRenderQuality();
+});
+bindRange('rngVolMaster', () => settings.volMaster, (v) => {
+  settings.volMaster = v;
+  applyRenderQuality();
+});
+bindRange('rngVolMusic', () => settings.volMusic, (v) => {
+  settings.volMusic = v;
+  applyRenderQuality();
+});
+bindRange('rngVolSfx', () => settings.volSfx, (v) => {
+  settings.volSfx = v;
+  applyRenderQuality();
+});
+
+initAuthScreen(
+  () => settings.lang,
+  () => {
+    applyI18n(settings);
+    renderMeta();
+  },
+);
 
 const KEYBIND_ACTIONS = ['forward', 'back', 'left', 'right', 'reload', 'pickup', 'heal', 'shieldItem', 'swap', 'grenade', 'ability', 'slide', 'prone'] as const;
 

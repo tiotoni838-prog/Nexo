@@ -6,6 +6,21 @@
 export class Sfx {
   private ctx: AudioContext | null = null;
   enabled = true;
+  private volMaster = 0.8;
+  private volMusic = 0.6;
+  private volSfx = 1;
+
+  setVolumes(master: number, music: number, sfx: number): void {
+    this.volMaster = Math.min(1, Math.max(0, master));
+    this.volMusic = Math.min(1, Math.max(0, music));
+    this.volSfx = Math.min(1, Math.max(0, sfx));
+    this.enabled = this.volMaster > 0;
+  }
+
+  private scaled(gain: number, music: boolean): number {
+    const channel = music ? this.volMusic : this.volSfx;
+    return gain * channel * this.volMaster;
+  }
 
   private ensure(): AudioContext | null {
     if (!this.enabled) return null;
@@ -26,7 +41,8 @@ export class Sfx {
     osc.type = type;
     osc.frequency.setValueAtTime(freq, ctx.currentTime);
     if (slideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(1, slideTo), ctx.currentTime + durMs / 1000);
-    amp.gain.setValueAtTime(gain, ctx.currentTime);
+    const g = this.scaled(gain, false);
+    amp.gain.setValueAtTime(g, ctx.currentTime);
     amp.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + durMs / 1000);
     osc.connect(amp).connect(ctx.destination);
     osc.start();
@@ -46,7 +62,7 @@ export class Sfx {
     filter.type = 'lowpass';
     filter.frequency.value = filterHz;
     const amp = ctx.createGain();
-    amp.gain.value = gain;
+    amp.gain.value = this.scaled(gain, false);
     src.connect(filter).connect(amp).connect(ctx.destination);
     src.start();
   }

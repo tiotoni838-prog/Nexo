@@ -9,6 +9,7 @@ import {
 } from '../shared/validation.js';
 import { AntiCheatMonitor } from '../shared/antiCheat.js';
 import type { MapPresetId } from '../shared/map.js';
+import type { GameModeId } from '../shared/gameModes.js';
 import { WORLD_RADIUS } from '../shared/constants.js';
 import { itemLabelEs } from '../shared/loot.js';
 import type {
@@ -32,6 +33,7 @@ export interface GameServerOptions {
   minPlayersToStart?: number;
   autoStartLobbyMs?: number;
   mapId?: MapPresetId;
+  modeId?: GameModeId;
   onTick?: (sim: MatchSim) => void;
 }
 
@@ -106,6 +108,7 @@ export class GameServer {
       botCount: options.botCount ?? 0,
       dropPhaseMs: 8000,
       mapId: options.mapId,
+      modeId: options.modeId,
     });
     this.antiCheat = new AntiCheatMonitor();
   }

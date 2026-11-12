@@ -107,7 +107,18 @@ describe('PayPalClient', () => {
 describe('StoreService', () => {
   it('la tienda solo vende cosméticos con precio visible', () => {
     for (const item of STORE_CATALOG) {
-      expect(['skin', 'emote', 'trail', 'banner', 'dalo-pack']).toContain(item.kind);
+      expect([
+        'skin',
+        'emote',
+        'trail',
+        'banner',
+        'spray',
+        'paracaidas',
+        'marco',
+        'insignia',
+        'mascota',
+        'dalo-pack',
+      ]).toContain(item.kind);
       expect(findStoreItem(item.sku)).toBeDefined();
       if (item.currency === 'USD') {
         expect(item.priceUsd).toMatch(/^\d+\.\d{2}$/);

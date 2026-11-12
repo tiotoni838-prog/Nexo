@@ -7,7 +7,40 @@ import { CHARACTERS, CHARACTER_IDS } from './characters.js';
  * Persistencia: cliente (localStorage) hasta tener cuentas con base de datos.
  */
 
-export type EquipSlot = 'skin' | 'trail' | 'banner' | 'emote';
+export type EquipSlot =
+  | 'skin'
+  | 'trail'
+  | 'banner'
+  | 'emote'
+  | 'spray'
+  | 'paracaidas'
+  | 'marco'
+  | 'insignia'
+  | 'mascota';
+
+export const EQUIP_SLOTS: EquipSlot[] = [
+  'skin',
+  'trail',
+  'banner',
+  'emote',
+  'spray',
+  'paracaidas',
+  'marco',
+  'insignia',
+  'mascota',
+];
+
+export const EQUIP_SLOT_LABELS: Record<EquipSlot, { es: string; en: string }> = {
+  skin: { es: 'Skin', en: 'Skin' },
+  trail: { es: 'Estela', en: 'Trail' },
+  banner: { es: 'Banner', en: 'Banner' },
+  emote: { es: 'Gesto', en: 'Emote' },
+  spray: { es: 'Spray', en: 'Spray' },
+  paracaidas: { es: 'Paracaídas', en: 'Parachute' },
+  marco: { es: 'Marco de perfil', en: 'Profile frame' },
+  insignia: { es: 'Insignia', en: 'Badge' },
+  mascota: { es: 'Mascota', en: 'Pet' },
+};
 
 export interface LockerState {
   owned: string[];
