@@ -9,7 +9,7 @@
  *    cuentas persistentes con base de datos.
  */
 
-export type StoreCurrency = 'USD' | 'NX';
+export type StoreCurrency = 'USD' | 'NX' | 'DALO';
 
 export interface StoreItem {
   sku: string;
@@ -17,10 +17,65 @@ export interface StoreItem {
   nameEn: string;
   priceUsd?: string;
   priceNx?: number;
+  priceDalos?: number;
   currency: StoreCurrency;
-  kind: 'skin' | 'emote' | 'trail' | 'banner';
+  kind: 'skin' | 'emote' | 'trail' | 'banner' | 'dalo-pack';
   rarity: 'raro' | 'epico' | 'legendario';
 }
+
+/**
+ * Monedas del juego:
+ *  - DALOS (◆ azules): moneda de PAGO. Se compran con PayPal en paquetes.
+ *  - NX (◆ doradas): moneda que se GANA jugando (kills, posición final).
+ * Todos los artículos son cosméticos: sin pay-to-win.
+ */
+export const DALO_PACKS: StoreItem[] = [
+  {
+    sku: 'dalo-100',
+    nameEs: '100 Dalos',
+    nameEn: '100 Dalos',
+    priceUsd: '0.99',
+    currency: 'USD',
+    kind: 'dalo-pack',
+    rarity: 'raro',
+  },
+  {
+    sku: 'dalo-550',
+    nameEs: '550 Dalos (+50 bono)',
+    nameEn: '550 Dalos (+50 bonus)',
+    priceUsd: '4.99',
+    currency: 'USD',
+    kind: 'dalo-pack',
+    rarity: 'epico',
+  },
+  {
+    sku: 'dalo-1200',
+    nameEs: '1.200 Dalos (+200 bono)',
+    nameEn: '1,200 Dalos (+200 bonus)',
+    priceUsd: '9.99',
+    currency: 'USD',
+    kind: 'dalo-pack',
+    rarity: 'epico',
+  },
+  {
+    sku: 'dalo-2500',
+    nameEs: '2.500 Dalos (+600 bono)',
+    nameEn: '2,500 Dalos (+600 bonus)',
+    priceUsd: '19.99',
+    currency: 'USD',
+    kind: 'dalo-pack',
+    rarity: 'legendario',
+  },
+];
+
+export const DALO_PACK_AMOUNTS: Record<string, number> = {
+  'dalo-100': 100,
+  'dalo-550': 600,
+  'dalo-1200': 1400,
+  'dalo-2500': 3100,
+};
+
+export const daloPackAmount = (sku: string): number => DALO_PACK_AMOUNTS[sku] ?? 0;
 
 export const STORE_CATALOG: StoreItem[] = [
   {
@@ -92,6 +147,33 @@ export const STORE_CATALOG: StoreItem[] = [
     nameEn: 'Emote: Nexo Dance',
     priceNx: 1200,
     currency: 'NX',
+    kind: 'emote',
+    rarity: 'legendario',
+  },
+  {
+    sku: 'dalo-skin-fenix',
+    nameEs: 'Skin: Fénix de Dalos',
+    nameEn: 'Skin: Dalos Phoenix',
+    priceDalos: 400,
+    currency: 'DALO',
+    kind: 'skin',
+    rarity: 'epico',
+  },
+  {
+    sku: 'dalo-trail-cometa',
+    nameEs: 'Estela: Cola de Cometa',
+    nameEn: 'Trail: Comet Tail',
+    priceDalos: 250,
+    currency: 'DALO',
+    kind: 'trail',
+    rarity: 'raro',
+  },
+  {
+    sku: 'dalo-emote-leyenda',
+    nameEs: 'Gesto: Reverencia Legendaria',
+    nameEn: 'Emote: Legendary Bow',
+    priceDalos: 600,
+    currency: 'DALO',
     kind: 'emote',
     rarity: 'legendario',
   },

@@ -1,6 +1,6 @@
 {
   "name": "nexo-frontier",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "NEXO: FRONTIER — vertical slice jugable de Battle Royale (cliente web + servidor autoritativo + host P2P + tienda PayPal server-side)",
   "type": "module",

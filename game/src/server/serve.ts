@@ -21,7 +21,8 @@ const MIME: Record<string, string> = {
  * Devuelve true si la petición fue atendida. Bloquea path traversal.
  */
 export const handleStatic = (req: http.IncomingMessage, res: http.ServerResponse, url: URL): boolean => {
-  const rel = url.pathname === '/' ? '/client/index.html' : url.pathname;
+  const pathname = url.pathname === '/download' ? '/client/download.html' : url.pathname;
+  const rel = pathname === '/' ? '/client/index.html' : pathname;
   const filePath = path.join(ROOT, path.normalize(rel).replace(/^(\.\.[/\\])+/, ''));
   if (!filePath.startsWith(ROOT)) {
     res.writeHead(403);

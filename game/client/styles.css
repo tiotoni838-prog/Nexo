@@ -366,3 +366,38 @@ h3 { color: var(--muted); margin-top: 0.5rem; }
   font-size: 14px;
 }
 #mapName { color: var(--muted); font-size: 13px; }
+
+/* ===== Meta-juego: pestañas, tienda, pase, ruleta, armario ===== */
+.tab-bar { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+.tab-btn {
+  padding: 8px 14px; border-radius: 10px 10px 0 0;
+  background: rgba(255,255,255,0.05); color: var(--muted);
+  border: 1px solid rgba(255,255,255,0.08); border-bottom: none;
+  cursor: pointer; font-size: 14px; font-weight: 600;
+}
+.tab-btn.active { background: var(--panel); color: var(--text); }
+.menu-panel { max-height: 52vh; overflow-y: auto; }
+.store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+.store-card {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px;
+}
+.store-name { font-size: 13px; font-weight: 700; }
+.store-meta { font-size: 11px; color: var(--muted); }
+.rarity-raro { color: var(--rarity-raro); }
+.rarity-epico { color: var(--rarity-epico); }
+.rarity-legendario { color: var(--rarity-legendario); }
+.btn.dalo { background: linear-gradient(90deg, #2f7fd6, #38e1c8); }
+.pass-track { height: 10px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden; margin: 6px 0; }
+.pass-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.4s; }
+.pass-tiers { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 240px; overflow-y: auto; }
+.pass-tier { display: flex; gap: 10px; font-size: 12px; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.03); opacity: 0.55; }
+.pass-tier.reached { opacity: 1; background: rgba(56,225,200,0.08); }
+.tier-num { font-weight: 800; min-width: 24px; color: var(--accent); }
+.tier-premium { color: var(--rarity-legendario); }
+.roulette-result { min-height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; margin: 10px 0; }
+.chances { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 12px; margin-top: 8px; }
+.locker-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.locker-slot { font-size: 13px; padding: 6px 10px; background: rgba(255,255,255,0.04); border-radius: 8px; }
+.mastery-row { display: grid; grid-template-columns: 1fr; gap: 2px; margin-bottom: 10px; font-size: 13px; }
+#btnFullscreen { margin-top: 8px; }

@@ -4,7 +4,7 @@ Battle Royale original, competitivo y accesible. Este repositorio contiene la
 **especificación de ingeniería** (`NEXO_FRONTIER_MEGA_SPEC.part*`, 100.000 fichas de
 trabajo) y el **vertical slice jugable** en `game/`.
 
-## Qué hay implementado (v1.0.0, verificado)
+## Qué hay implementado (v1.1.0, verificado)
 
 - **Simulación autoritativa compartida** (`game/src/shared/`): movimiento con colisiones,
   **12 armas** con rarezas y daño inspirado en balística real (incluido **lanzacohetes
@@ -57,15 +57,28 @@ trabajo) y el **vertical slice jugable** en `game/`.
   (`ADMIN_TOKEN`) que consulta la API de transacciones de PayPal y muestra total USD,
   número de operaciones y desglose por artículo. Endpoint JSON: `/api/admin/earnings?days=N`.
 
-## Descargar y jugar (v1.0.0)
+## Descargar y jugar (v1.1.0)
 
-En la carpeta [`releases/`](releases/) del repo:
+En la carpeta [`releases/`](releases/) del repo (o en `/download` del servidor de juego,
+con botones por plataforma):
 
-- **[NexoFPS-1.0.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.0.0-web-standalone.zip)** —
+- **[NexoFPS-1.1.0-web-standalone.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.1.0-web-standalone.zip)** —
   el juego completo en UN archivo HTML. Descomprime, abre `NexoFPS.html` con doble clic
-  y juega contra bots sin internet. Windows / macOS / Linux.
-- **[NexoFPS-1.0.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.0.0-servidor.zip)** —
+  y juega contra bots sin internet. Windows / macOS / Linux. También funciona en el
+  navegador del **teléfono** (controles táctiles + pantalla completa).
+- **[NexoFPS-1.1.0-servidor.zip](https://github.com/tiotoni838-prog/Nexo/raw/vibe/nexo-frontier-vertical-slice-951e24/releases/NexoFPS-1.1.0-servidor.zip)** —
   servidor dedicado (Node.js 20+) con tienda PayPal y panel de ganancias.
+
+Para anunciar el juego en **Discord**: guía y embed listos en [`discord/DISCORD.md`](discord/DISCORD.md).
+
+### Meta-juego (v1.1.0)
+- **Monedas**: **Dalos** (se compran con PayPal, 4 paquetes con bono) y **NX** (se ganan
+  jugando: kills + posición). Todo cosmético, sin pay-to-win.
+- **Pase de Batalla** Temporada 1: 30 niveles, ruta gratis + premium (950 Dalos),
+  recompensas automáticas al subir de nivel.
+- **Ruleta**: 1 giro gratis cada 24 h, giros extra con Dalos, probabilidades visibles.
+- **Armario**: equipa skins, estelas, banners y gestos conseguidos.
+- **Evolutivas**: maestría por personaje con títulos (Novato → Leyenda).
 
 Para generar el standalone localmente: `cd game && npm run bundle`.
 

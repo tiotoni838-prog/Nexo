@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { loadPayPalConfig, PayPalClient, PayPalConfigError } from './paypalClient.js';
-import { STORE_CATALOG, findStoreItem } from './store.js';
+import { STORE_CATALOG, DALO_PACKS, findStoreItem } from './store.js';
 
 /**
  * Rutas HTTP de la tienda. Se montan en el proceso SERVIDOR (main.ts), nunca
@@ -34,16 +34,19 @@ export class StoreService {
   }
 
   catalog() {
-    return STORE_CATALOG.map(({ sku, nameEs, nameEn, priceUsd, priceNx, currency, kind, rarity }) => ({
-      sku,
-      nameEs,
-      nameEn,
-      priceUsd: priceUsd ?? null,
-      priceNx: priceNx ?? null,
-      currency,
-      kind,
-      rarity,
-    }));
+    return [...STORE_CATALOG, ...DALO_PACKS].map(
+      ({ sku, nameEs, nameEn, priceUsd, priceNx, priceDalos, currency, kind, rarity }) => ({
+        sku,
+        nameEs,
+        nameEn,
+        priceUsd: priceUsd ?? null,
+        priceNx: priceNx ?? null,
+        priceDalos: priceDalos ?? null,
+        currency,
+        kind,
+        rarity,
+      }),
+    );
   }
 
   async createPurchase(sku: string, baseUrl: string): Promise<{ orderId: string; approveUrl: string | null }> {
@@ -55,7 +58,7 @@ export class StoreService {
     const order = await this.paypal.createOrder({
       sku: item.sku,
       priceUsd: item.priceUsd,
-      description: cosmeticDescription(item.nameEs),
+      description: cosmeticDescription(item.nameEs, item.kind),
       referenceId: orderId,
       returnUrl: `${baseUrl}/api/store/return`,
       cancelUrl: `${baseUrl}/api/store/cancel`,
@@ -80,7 +83,10 @@ export class StoreService {
   }
 }
 
-const cosmeticDescription = (name: string): string => `NEXO FRONTIER cosmético: ${name}`;
+const cosmeticDescription = (name: string, kind: string): string =>
+  kind === 'dalo-pack'
+    ? `Nexo FPS: ${name} (moneda del juego)`
+    : `Nexo FPS cosmético: ${name}`;
 
 export const handleStoreRoutes = (
   req: http.IncomingMessage,
@@ -139,7 +145,14 @@ export const handleStoreRoutes = (
     }
     void store
       .capture(token)
-      .then((r) => json(200, { status: r.status, sku: r.sku }))
+      .then((r) => {
+        if (r.status === 'captured') {
+          res.writeHead(302, { location: `/?comprado=${encodeURIComponent(r.sku)}` });
+          res.end();
+        } else {
+          json(200, { status: r.status, sku: r.sku });
+        }
+      })
       .catch((err: Error) => json(400, { error: err.message }));
     return true;
   }

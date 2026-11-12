@@ -8,7 +8,14 @@ import { t } from '../shared/i18n.js';
 import { WEAPONS } from '../shared/weapons.js';
 import { CHARACTERS, CHARACTER_IDS, type CharacterId } from '../shared/characters.js';
 import { GAME_VERSION } from '../shared/version.js';
-import { computeMatchNxEarned } from '../paypal/store.js';
+import {
+  initMetaPanels,
+  processPurchaseReturn,
+  grantMatchRewards,
+  addNx,
+  getNx,
+  renderMeta,
+} from './meta.js';
 import type { ClientMsg, ServerMsg, SnapshotMsg, WelcomeMsg } from '../shared/protocol.js';
 
 type Mode = 'menu' | 'solo' | 'ws' | 'p2p-host' | 'p2p-guest';
@@ -35,21 +42,25 @@ let proneToggle = false;
 let selectedCharacter: CharacterId = 'aurora';
 let killFeedTimers: number[] = [];
 
-const NX_KEY = 'nexo_nx_balance';
-const getNxBalance = (): number => {
-  const raw = localStorage.getItem(NX_KEY);
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
-};
-const addNx = (amount: number): number => {
-  const next = Math.max(0, getNxBalance() + Math.floor(amount));
-  localStorage.setItem(NX_KEY, String(next));
-  return next;
-};
 const refreshNxBalanceUi = (): void => {
-  $('nxBalance').textContent = `◆ ${getNxBalance()} NX`;
+  renderMeta();
 };
 refreshNxBalanceUi();
+initMetaPanels();
+processPurchaseReturn();
+
+$('btnFullscreen').addEventListener('click', () => {
+  if (document.fullscreenElement) void document.exitFullscreen();
+  else void document.documentElement.requestFullscreen();
+});
+
+if ('ontouchstart' in window) {
+  const hint = document.createElement('p');
+  hint.className = 'muted';
+  hint.style.textAlign = 'center';
+  hint.textContent = '📱 En teléfono usa los controles táctiles en partida y activa pantalla completa.';
+  $('panel-jugar')!.querySelector('.menu-card')!.prepend(hint);
+}
 
 const checkForUpdates = async (): Promise<void> => {
   try {
@@ -303,14 +314,17 @@ const handleServerMsg = (msg: ServerMsg): void => {
       const won = msg.placement === 1;
       if (won) sfx.victory();
       else sfx.defeat();
-      const nxEarned = computeMatchNxEarned(msg.kills, msg.placement, msg.totalPlayers);
-      const nxTotal = addNx(nxEarned);
+      const rewards = grantMatchRewards(msg.kills, msg.placement, msg.totalPlayers, selectedCharacter);
       refreshNxBalanceUi();
+      const claimedText = rewards.claimed.length
+        ? `<p class="nx-balance">🎖️ ${rewards.claimed.map((r) => r.labelEs).join(' · ')}</p>`
+        : '';
       panel.innerHTML = `
         <h2>${won ? t('victory', settings.lang) : t('defeat', settings.lang)}</h2>
         <p>${t('placement', settings.lang)}: ${msg.placement} / ${msg.totalPlayers}</p>
         <p>${t('kills', settings.lang)}: ${msg.kills}</p>
-        <p class="nx-balance">◆ +${nxEarned} NX · Total: ${nxTotal} NX</p>
+        <p class="nx-balance">◆ +${rewards.nx} NX · Total: ${rewards.totalNx} NX · +${rewards.passXp} XP de pase</p>
+        ${claimedText}
         <p>🏆 ${msg.winnerName}</p>
         <button class="btn" id="btnBackMenu">${t('backToMenu', settings.lang)}</button>`;
       panel.classList.remove('hidden');

@@ -19,6 +19,15 @@
         <span id="updateText"></span>
         <button id="btnUpdate" class="btn small primary" data-i18n="update"></button>
       </div>
+      <div id="metaBanner" class="update-banner hidden"></div>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="panel-jugar">🎮 Jugar</button>
+        <button class="tab-btn" data-tab="tienda">🛒 Tienda</button>
+        <button class="tab-btn" data-tab="pase">🎖️ Pase</button>
+        <button class="tab-btn" data-tab="ruleta">🎡 Ruleta</button>
+        <button class="tab-btn" data-tab="armario">👕 Armario</button>
+      </div>
+      <div id="panel-jugar" class="menu-panel">
       <div class="menu-card">
         <label for="playerName" data-i18n="name"></label>
         <input id="playerName" maxlength="16" value="Jugador" autocomplete="off" />
@@ -29,6 +38,7 @@
           <button id="btnHost" class="btn" data-i18n="hostOnline"></button>
           <button id="btnJoin" class="btn" data-i18n="joinOnline"></button>
         </div>
+        <button id="btnFullscreen" class="btn small">⛶ Pantalla completa</button>
         <div id="joinRow" class="row hidden">
           <input id="serverAddr" value="ws://localhost:7777" />
           <button id="btnConnect" class="btn" data-i18n="connect"></button>
@@ -49,6 +59,40 @@
           <button id="btnCopyAnswer" class="btn small" data-i18n="copy"></button>
         </div>
         <button id="btnSettings" class="btn small" data-i18n="settings"></button>
+      </div>
+      </div>
+
+      <div id="tienda" class="menu-panel hidden">
+        <div class="menu-card">
+          <p class="muted">Dalos = moneda de pago (PayPal) · NX = se gana jugando. Todo es cosmético.</p>
+          <div id="storeGrid" class="store-grid"></div>
+        </div>
+      </div>
+
+      <div id="pase" class="menu-panel hidden">
+        <div class="menu-card">
+          <div id="passHeader"></div>
+          <div id="passTiers" class="pass-tiers"></div>
+        </div>
+      </div>
+
+      <div id="ruleta" class="menu-panel hidden">
+        <div class="menu-card">
+          <p class="muted">1 giro gratis cada 24 h · giros extra con Dalos</p>
+          <div id="rouletteResult" class="roulette-result"></div>
+          <button id="btnSpin" class="btn primary">Girar</button>
+          <h3>Probabilidades</h3>
+          <div id="rouletteChances" class="chances"></div>
+        </div>
+      </div>
+
+      <div id="armario" class="menu-panel hidden">
+        <div class="menu-card">
+          <div id="lockerGrid" class="locker-grid"></div>
+          <h3>Tu colección</h3>
+          <div id="lockerInventory" class="store-grid"></div>
+          <div id="masteryList"></div>
+        </div>
       </div>
       <p class="footnote">Servidor autoritativo · Cosméticos únicamente · Sin pay-to-win</p>
     </section>
