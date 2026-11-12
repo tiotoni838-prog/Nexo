@@ -7,15 +7,17 @@ trabajo) y el **vertical slice jugable** en `game/`.
 ## Qué hay implementado (vertical slice v0.1, verificado)
 
 - **Simulación autoritativa compartida** (`game/src/shared/`): movimiento con colisiones,
-  5 armas originales con rarezas, loot, inventario, zona dinámica en 5 fases con daño
-  creciente, condición de victoria último-en-pie, espectador y resultados.
+  6 armas originales con rarezas, granadas con daño por área, airdrops legendarios, loot,
+  inventario, zona dinámica en 5 fases con daño creciente, victoria último-en-pie,
+  espectador clicable y resultados.
 - **Servidor de partida autoritativo** (`game/src/server/`): tick 30 Hz, snapshots 15 Hz,
   validación de mensajes, límites anti-abuso, versionado de protocolo, bots de
   entrenamiento, endpoint `/health`. El cliente nunca decide daño, inventario ni resultados.
 - **Cliente web de alta resolución** (`game/client/` + `game/src/client/`): canvas con
-  escalado por `devicePixelRatio` (hasta 3×), teclado/ratón remapeable, controles táctiles
-  con joystick virtual, HUD completo (vida, escudo, arma, munición, minimapa, zona,
-  kill feed, subtítulos), español/inglés, alto contraste y escalado de texto.
+  escalado por `devicePixelRatio` (hasta 3×), partículas con glow, sombras, viñeta,
+  screen shake, tracers luminosos, SFX sintetizados originales (WebAudio, sin assets),
+  teclado/ratón remapeable, controles táctiles, HUD completo, español/inglés, alto
+  contraste y escalado de texto.
 - **Modo "mi dispositivo es el servidor"** (requisito del propietario): el anfitrión
   ejecuta la MISMA simulación autoritativa en su dispositivo y los invitados se conectan
   por WebRTC con STUN (`game/src/client/p2p.ts`). Incluye además servidor dedicado Node.

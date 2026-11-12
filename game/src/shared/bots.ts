@@ -8,6 +8,7 @@ export interface BotBrain {
   nextDecisionMs: number;
   strafeDir: number;
   reactionDelayMs: number;
+  grenadeReadyMs: number;
 }
 
 const hasLineOfSight = (sim: MatchSim, a: SimPlayer, b: SimPlayer): boolean => {
@@ -39,6 +40,10 @@ export const updateBot = (sim: MatchSim, bot: SimPlayer, brain: BotBrain, dtMs: 
     const dy = target.y - bot.y;
     const d = Math.hypot(dx, dy) || 1;
     bot.aim = Math.atan2(dy, dx);
+    if (bot.inventory.grenades > 0 && d > 130 && d < 320 && sim.timeMs >= brain.grenadeReadyMs) {
+      brain.grenadeReadyMs = sim.timeMs + 9000 + Math.random() * 6000;
+      sim.throwGrenade(bot.id);
+    }
     const desired = d > 160 ? 1 : d < 90 ? -0.6 : 0;
     const strafe = Math.sin(sim.timeMs / 400 + bot.id) * brain.strafeDir;
     bot.input = {

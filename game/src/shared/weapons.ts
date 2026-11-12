@@ -1,6 +1,6 @@
 import type { Rarity } from './constants.js';
 
-export type WeaponId = 'pistola' | 'subfusil' | 'fusil' | 'escopeta' | 'francotirador';
+export type WeaponId = 'pistola' | 'subfusil' | 'fusil' | 'escopeta' | 'francotirador' | 'ametralladora';
 
 export interface WeaponDef {
   id: WeaponId;
@@ -82,6 +82,19 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
     bulletSpeed: 1100,
     pellets: 1,
   },
+  ametralladora: {
+    id: 'ametralladora',
+    nameEs: 'Ametralladora Tormenta',
+    nameEn: 'Storm LMG',
+    damage: 13,
+    fireIntervalMs: 110,
+    spreadRad: 0.14,
+    range: 480,
+    magSize: 60,
+    reloadMs: 3200,
+    bulletSpeed: 680,
+    pellets: 1,
+  },
 };
 
 export const RARITY_DAMAGE_MULT: Record<Rarity, number> = {
@@ -91,9 +104,16 @@ export const RARITY_DAMAGE_MULT: Record<Rarity, number> = {
   legendario: 1.4,
 };
 
-export type ConsumableId = 'botiquin' | 'escudo';
+export type ConsumableId = 'botiquin' | 'escudo' | 'granada';
 
 export const CONSUMABLES: Record<ConsumableId, { heal: number; shield: number; useMs: number }> = {
   botiquin: { heal: 50, shield: 0, useMs: 2000 },
   escudo: { heal: 0, shield: 50, useMs: 1500 },
+  granada: { heal: 0, shield: 0, useMs: 0 },
 };
+
+export const GRENADE_RADIUS = 90;
+export const GRENADE_DAMAGE = 85;
+export const GRENADE_FUSE_MS = 1400;
+export const GRENADE_SPEED = 420;
+export const MAX_GRENADES = 3;

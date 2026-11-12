@@ -208,6 +208,9 @@ export class GameServer {
           case 'dropWeapon':
             this.sim.dropWeapon(pid);
             break;
+          case 'throwGrenade':
+            this.sim.throwGrenade(pid);
+            break;
         }
         return;
       }
@@ -272,6 +275,7 @@ export class GameServer {
             nextDecisionMs: 0,
             strafeDir: Math.random() < 0.5 ? -1 : 1,
             reactionDelayMs: 120 + Math.random() * 260,
+            grenadeReadyMs: 0,
           };
           this.botBrains.set(player.id, brain);
         }
@@ -314,6 +318,11 @@ export class GameServer {
         vy: Math.round(b.vy),
         ownerId: b.ownerId,
       })),
+      grenades: this.sim.grenades.map((g) => ({
+        id: g.id,
+        x: Math.round(g.x),
+        y: Math.round(g.y),
+      })),
       items: toNetItems(this.sim),
     };
 
@@ -328,6 +337,7 @@ export class GameServer {
             mag: p.inventory.weapons[p.inventory.activeWeapon]?.ammoInMag ?? 0,
             botiquines: p.inventory.botiquines,
             escudos: p.inventory.escudos,
+            grenades: p.inventory.grenades,
             activeSlot: p.inventory.activeWeapon,
             weapons: p.inventory.weapons,
             reloading: p.reloadEndMs > this.sim.timeMs,

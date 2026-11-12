@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MatchSim, type SimPlayer } from '../src/shared/sim.js';
 import { MAX_HP, MAX_SHIELD } from '../src/shared/constants.js';
+import { GRENADE_RADIUS, WEAPONS } from '../src/shared/weapons.js';
 import { isOutsideZone } from '../src/shared/zone.js';
 
 const makeSim = (botCount = 0) => {
@@ -212,6 +213,68 @@ describe('MatchSim', () => {
       p.y + 14 > obstacle.y &&
       p.y - 14 < obstacle.y + obstacle.h;
     expect(inside).toBe(false);
+  });
+
+  it('las granadas explotan y dañan por área con caída de daño', () => {
+    const sim = makeSim();
+    const a = sim.addPlayer('a', false);
+    const b = sim.addPlayer('b', false);
+    enterPlay(sim, [a, b]);
+    a.x = 0;
+    a.y = 0;
+    b.x = 150;
+    b.y = 0;
+    b.shield = 0;
+    b.hp = 100;
+    a.aim = 0;
+    a.inventory.grenades = 1;
+    expect(sim.throwGrenade(a.id)).toBe(true);
+    expect(sim.throwGrenade(a.id)).toBe(false);
+    expect(sim.grenades.length).toBe(1);
+    const events: ReturnType<MatchSim['tick']>[] = [];
+    for (let i = 0; i < 60; i++) {
+      events.push(sim.tick(33.33));
+    }
+    expect(sim.grenades.length).toBe(0);
+    const allEvents = events.flat();
+    expect(allEvents.some((e) => e.kind === 'explosion')).toBe(true);
+    expect(b.hp).toBeLessThan(100);
+    expect(b.hp).toBeGreaterThan(100 - 85);
+  });
+
+  it('la granada no daña a quien está fuera del radio', () => {
+    const sim = makeSim();
+    const a = sim.addPlayer('a', false);
+    const b = sim.addPlayer('b', false);
+    enterPlay(sim, [a, b]);
+    a.x = 0;
+    a.y = 0;
+    b.x = 0;
+    b.y = GRENADE_RADIUS + 200;
+    a.aim = Math.PI / 2;
+    a.inventory.grenades = 1;
+    sim.throwGrenade(a.id);
+    for (let i = 0; i < 60; i++) sim.tick(33.33);
+    expect(b.hp).toBe(MAX_HP);
+  });
+
+  it('los airdrops aparecen periódicamente con loot legendario', () => {
+    const sim = makeSim();
+    const a = sim.addPlayer('a', false);
+    const b = sim.addPlayer('b', false);
+    enterPlay(sim, [a, b]);
+    const itemsBefore = sim.items.length;
+    sim.airdropTimerMs = 100;
+    sim.tick(200);
+    expect(sim.items.length).toBe(itemsBefore + 3);
+    const legendary = sim.items.find((i) => i.rarity === 'legendario');
+    expect(legendary).toBeDefined();
+    expect(legendary?.kind === 'weapon' || legendary?.kind === 'shieldcore').toBe(true);
+  });
+
+  it('la ametralladora existe con sus estadísticas', () => {
+    expect(WEAPONS.ametralladora.magSize).toBe(60);
+    expect(WEAPONS.ametralladora.damage).toBe(13);
   });
 
   it('el daño fuera de zona usa dps de la fase actual', () => {

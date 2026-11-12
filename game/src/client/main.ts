@@ -2,6 +2,7 @@ import { GameServer, type Connection } from '../server/gameServer.js';
 import { WsTransport, ClientNet, type Transport } from './net.js';
 import { P2PHost, P2PGuest } from './p2p.js';
 import { Renderer, type RenderState } from './render.js';
+import { Sfx } from './audio.js';
 import { loadSettings, saveSettings, applySettingsToDom, applyI18n, keyLabel, type Settings } from './settings.js';
 import { t } from '../shared/i18n.js';
 import { WEAPONS } from '../shared/weapons.js';
@@ -29,6 +30,8 @@ let firing = false;
 let killFeedTimers: number[] = [];
 
 const renderer = new Renderer($('canvas') as HTMLCanvasElement);
+const sfx = new Sfx();
+let spectateId: number | undefined;
 
 const showScreen = (id: 'menu' | 'settings' | 'game'): void => {
   for (const s of ['menu', 'settings', 'game']) {
@@ -247,6 +250,8 @@ const handleServerMsg = (msg: ServerMsg): void => {
     case 'result': {
       const panel = $('resultPanel');
       const won = msg.placement === 1;
+      if (won) sfx.victory();
+      else sfx.defeat();
       panel.innerHTML = `
         <h2>${won ? t('victory', settings.lang) : t('defeat', settings.lang)}</h2>
         <p>${t('placement', settings.lang)}: ${msg.placement} / ${msg.totalPlayers}</p>
@@ -343,6 +348,8 @@ window.addEventListener('keydown', (ev) => {
   if (ev.code === keyFor('heal')) net?.sendAction({ t: 'action', kind: 'use', consumable: 'botiquin' });
   if (ev.code === keyFor('shieldItem')) net?.sendAction({ t: 'action', kind: 'use', consumable: 'escudo' });
   if (ev.code === keyFor('swap')) net?.sendAction({ t: 'action', kind: 'swap', slot: latestSnapshot?.you ? 1 - latestSnapshot.you.activeSlot : 0 });
+  if (ev.code === keyFor('grenade')) net?.sendAction({ t: 'action', kind: 'throwGrenade' });
+  if (ev.code === keyFor('reload')) sfx.reload();
 });
 
 window.addEventListener('keyup', (ev) => keysDown.delete(ev.code));
@@ -357,13 +364,22 @@ canvasEl.addEventListener('mousemove', (ev) => {
 });
 
 canvasEl.addEventListener('mousedown', (ev) => {
-  if (ev.button === 0) {
-    if (latestSnapshot?.phase === 'drop') {
-      sendDropChoiceFromClick(ev.clientX, ev.clientY);
-    } else {
-      firing = true;
-    }
+  if (ev.button !== 0) return;
+  const me = latestSnapshot?.players.find((p) => p.id === yourId);
+  if (latestSnapshot?.phase === 'drop') {
+    sendDropChoiceFromClick(ev.clientX, ev.clientY);
+    return;
   }
+  if (me && !me.alive && latestSnapshot) {
+    const alive = latestSnapshot.players.filter((p) => p.alive && !p.landing);
+    if (alive.length > 0) {
+      const idx = alive.findIndex((p) => p.id === spectateId);
+      spectateId = alive[(idx + 1) % alive.length]!.id;
+      subtitle(`Espectador \u2192 ${alive.find((p) => p.id === spectateId)!.name}`);
+    }
+    return;
+  }
+  firing = true;
 });
 window.addEventListener('mouseup', () => {
   firing = false;
@@ -452,6 +468,7 @@ bindTouchButton('btnShield', () => net?.sendAction({ t: 'action', kind: 'use', c
 bindTouchButton('btnSwap', () =>
   net?.sendAction({ t: 'action', kind: 'swap', slot: latestSnapshot?.you ? 1 - latestSnapshot.you.activeSlot : 0 }),
 );
+bindTouchButton('btnGrenade', () => net?.sendAction({ t: 'action', kind: 'throwGrenade' }));
 
 let lastInputSent = 0;
 const sendInputLoop = (): void => {
@@ -489,6 +506,8 @@ const renderLoop = (): void => {
     map: gameMap,
     prevPlayers: prevPositions,
     renderTime: now,
+    spectateId,
+    dtMs: dt,
   });
   requestAnimationFrame(renderLoop);
 };
@@ -556,7 +575,7 @@ $('chkSubs').addEventListener('change', () => {
   saveSettings(settings);
 });
 
-const KEYBIND_ACTIONS = ['forward', 'back', 'left', 'right', 'reload', 'pickup', 'heal', 'shieldItem', 'swap'] as const;
+const KEYBIND_ACTIONS = ['forward', 'back', 'left', 'right', 'reload', 'pickup', 'heal', 'shieldItem', 'swap', 'grenade'] as const;
 
 const renderKeybinds = (): void => {
   const list = $('keybindList');

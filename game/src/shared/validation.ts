@@ -57,7 +57,7 @@ export const validateClientMsg = (raw: unknown): ClientMsg | null => {
       };
     }
     case 'action': {
-      const kinds = ['pickup', 'reload', 'use', 'swap', 'dropWeapon'];
+      const kinds = ['pickup', 'reload', 'use', 'swap', 'dropWeapon', 'throwGrenade'];
       if (typeof msg.kind !== 'string' || !kinds.includes(msg.kind)) return null;
       if (msg.kind === 'use' && msg.consumable !== 'botiquin' && msg.consumable !== 'escudo') return null;
       if (msg.kind === 'swap' && msg.slot !== 0 && msg.slot !== 1) return null;

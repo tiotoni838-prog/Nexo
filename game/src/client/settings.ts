@@ -19,6 +19,7 @@ const DEFAULT_KEYS: Record<string, string> = {
   heal: 'KeyQ',
   shieldItem: 'KeyF',
   swap: 'Space',
+  grenade: 'KeyG',
 };
 
 const STORAGE_KEY = 'nexo-settings-v1';

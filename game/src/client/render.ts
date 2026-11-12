@@ -1,6 +1,7 @@
 import type { GameMap } from '../shared/map.js';
 import type { SnapshotMsg, NetPlayer } from '../shared/protocol.js';
 import { WORLD_RADIUS, MAP_SIZE } from '../shared/constants.js';
+import { ParticleSystem } from './effects.js';
 
 const RARITY_COLORS: Record<string, string> = {
   comun: '#b7c3d8',
@@ -15,12 +16,23 @@ export interface RenderState {
   map: GameMap | null;
   prevPlayers: Map<number, { x: number; y: number }>;
   renderTime: number;
+  spectateId?: number;
+  dtMs: number;
 }
 
 export class Renderer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   dpr = 1;
+  particles = new ParticleSystem();
+  private shakeMs = 0;
+  private shakeIntensity = 0;
+  private timeMs = 0;
+
+  addShake(ms: number, intensity: number): void {
+    this.shakeMs = Math.max(this.shakeMs, ms);
+    this.shakeIntensity = Math.max(this.shakeIntensity, intensity);
+  }
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -50,23 +62,103 @@ export class Renderer {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (!snap || !state.map) return;
 
+    this.timeMs += state.dtMs;
+    this.particles.update(state.dtMs);
+    if (this.shakeMs > 0) this.shakeMs -= state.dtMs;
+
     const me = snap.players.find((p) => p.id === state.yourId);
-    const spectateTarget =
-      snap.players.find((p) => p.alive && !p.landing) ?? null;
-    const focus = me ?? spectateTarget;
+    let focus = me && me.alive ? me : null;
+    if (!focus) {
+      const alive = snap.players.filter((p) => p.alive && !p.landing);
+      if (state.spectateId !== undefined) {
+        focus = alive.find((p) => p.id === state.spectateId) ?? alive[0] ?? null;
+      } else {
+        focus = alive[0] ?? null;
+      }
+    }
     if (!focus) return;
 
     const zoom = Math.min(canvas.width, canvas.height) / (900 * this.dpr) * this.dpr;
-    const camX = focus.x;
-    const camY = focus.y;
+    const shake = this.shakeMs > 0 ? this.shakeIntensity * (this.shakeMs / 300) : 0;
+    const camX = focus.x + (shake ? (Math.random() - 0.5) * shake : 0);
+    const camY = focus.y + (shake ? (Math.random() - 0.5) * shake : 0);
+
+    const toScreen = (wx: number, wy: number): [number, number] => [
+      (wx - camX) * zoom + canvas.width / 2,
+      (wy - camY) * zoom + canvas.height / 2,
+    ];
 
     this.drawGrid(camX, camY, zoom);
     this.drawZone(snap, camX, camY, zoom);
     this.drawMap(state.map, camX, camY, zoom);
+    this.drawShadows(state.map, snap, camX, camY, zoom);
     this.drawItems(snap, camX, camY, zoom);
+    this.drawGrenades(snap, camX, camY, zoom);
     this.drawBullets(snap, camX, camY, zoom);
     this.drawPlayers(snap, state, camX, camY, zoom);
+    this.particles.draw(this.ctx, toScreen, this.dpr);
+    this.drawPoiNames(state.map, camX, camY, zoom);
+    this.drawVignette();
     this.drawMinimap(snap, state.map, state.yourId);
+  }
+
+  private drawShadows(map: GameMap, snap: SnapshotMsg, camX: number, camY: number, zoom: number): void {
+    const { ctx } = this;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+    for (const o of map.obstacles) {
+      const [sx, sy] = this.worldToScreen(camX, camY, zoom, o.x + 7, o.y + 9);
+      ctx.fillRect(sx, sy, o.w * zoom, o.h * zoom);
+    }
+    for (const p of snap.players) {
+      if (!p.alive) continue;
+      const [sx, sy] = this.worldToScreen(camX, camY, zoom, p.x + 4, p.y + 6);
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, 13 * zoom * this.dpr * 0.5, 8 * zoom * this.dpr * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  private drawGrenades(snap: SnapshotMsg, camX: number, camY: number, zoom: number): void {
+    const { ctx } = this;
+    const pulse = 1 + Math.sin(this.timeMs / 60) * 0.25;
+    for (const g of snap.grenades) {
+      const [sx, sy] = this.worldToScreen(camX, camY, zoom, g.x, g.y);
+      ctx.fillStyle = '#5a6b52';
+      ctx.beginPath();
+      ctx.arc(sx, sy, 5 * this.dpr * 0.6 * zoom * 0.6 * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ef5b6b';
+      ctx.lineWidth = 1.5 * this.dpr;
+      ctx.stroke();
+    }
+  }
+
+  private drawPoiNames(map: GameMap, camX: number, camY: number, zoom: number): void {
+    const { ctx } = this;
+    ctx.fillStyle = 'rgba(142, 160, 192, 0.4)';
+    ctx.font = `${13 * this.dpr}px system-ui`;
+    ctx.textAlign = 'center';
+    for (const poi of map.pois) {
+      const [sx, sy] = this.worldToScreen(camX, camY, zoom, poi.center.x, poi.center.y);
+      if (sx < -100 || sx > this.canvas.width + 100 || sy < -100 || sy > this.canvas.height + 100) continue;
+      ctx.fillText(poi.nameEs, sx, sy);
+    }
+  }
+
+  private drawVignette(): void {
+    const { ctx, canvas } = this;
+    const gradient = ctx.createRadialGradient(
+      canvas.width / 2,
+      canvas.height / 2,
+      Math.min(canvas.width, canvas.height) * 0.42,
+      canvas.width / 2,
+      canvas.height / 2,
+      Math.max(canvas.width, canvas.height) * 0.75,
+    );
+    gradient.addColorStop(0, 'rgba(0,0,0,0)');
+    gradient.addColorStop(1, 'rgba(0,0,0,0.42)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
   private drawGrid(camX: number, camY: number, zoom: number): void {
@@ -138,7 +230,12 @@ export class Renderer {
     for (const item of snap.items) {
       const [sx, sy] = this.worldToScreen(camX, camY, zoom, item.x, item.y);
       const color = RARITY_COLORS[item.rarity] ?? '#b7c3d8';
-      const size = 9 * zoom * this.dpr * 0.5;
+      const legendary = item.rarity === 'legendario';
+      const size = (legendary ? 13 : 9) * zoom * this.dpr * 0.5;
+      if (legendary) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 14 * this.dpr;
+      }
       ctx.save();
       ctx.translate(sx, sy);
       ctx.rotate(Math.PI / 4);
@@ -147,13 +244,16 @@ export class Renderer {
       ctx.strokeStyle = 'rgba(0,0,0,0.5)';
       ctx.lineWidth = 1;
       ctx.strokeRect(-size, -size, size * 2, size * 2);
+      ctx.shadowBlur = 0;
       ctx.restore();
     }
   }
 
   private drawBullets(snap: SnapshotMsg, camX: number, camY: number, zoom: number): void {
     const { ctx } = this;
-    ctx.strokeStyle = '#f2b632';
+    ctx.strokeStyle = '#ffd47a';
+    ctx.shadowColor = '#f2b632';
+    ctx.shadowBlur = 6 * this.dpr;
     ctx.lineWidth = 2 * this.dpr;
     ctx.beginPath();
     for (const b of snap.bullets) {
@@ -164,6 +264,7 @@ export class Renderer {
       ctx.lineTo(sx - (b.vx / vlen) * len, sy - (b.vy / vlen) * len);
     }
     ctx.stroke();
+    ctx.shadowBlur = 0;
   }
 
   private drawPlayers(

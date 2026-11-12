@@ -22,7 +22,7 @@ export interface InputMsg {
 
 export interface ActionMsg {
   t: 'action';
-  kind: 'pickup' | 'reload' | 'use' | 'swap' | 'dropWeapon';
+  kind: 'pickup' | 'reload' | 'use' | 'swap' | 'dropWeapon' | 'throwGrenade';
   slot?: number;
   consumable?: ConsumableId;
 }
@@ -58,6 +58,12 @@ export interface NetPlayer {
   landing: boolean;
 }
 
+export interface NetGrenade {
+  id: number;
+  x: number;
+  y: number;
+}
+
 export interface NetBullet {
   id: number;
   x: number;
@@ -90,8 +96,9 @@ export interface SnapshotMsg {
   alive: number;
   players: NetPlayer[];
   bullets: NetBullet[];
+  grenades: NetGrenade[];
   items: NetItem[];
-  you: { hp: number; shield: number; ammo: number; mag: number; botiquines: number; escudos: number; activeSlot: number; weapons: Array<{ weaponId: WeaponId; rarity: Rarity; ammoInMag: number } | null>; reloading: boolean } | null;
+  you: { hp: number; shield: number; ammo: number; mag: number; botiquines: number; escudos: number; grenades: number; activeSlot: number; weapons: Array<{ weaponId: WeaponId; rarity: Rarity; ammoInMag: number } | null>; reloading: boolean } | null;
 }
 
 export interface WelcomeMsg {
@@ -114,7 +121,7 @@ export interface PhaseMsg {
 
 export interface EventMsg {
   t: 'event';
-  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone';
+  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone' | 'explosion' | 'airdrop';
   killerId?: number;
   killerName?: string;
   victimId?: number;

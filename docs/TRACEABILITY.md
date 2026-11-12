@@ -9,7 +9,7 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 | Versionado de protocolo / compatibilidad (08) | `PROTOCOL_VERSION`, rechazo en `gameServer.handleMessage` | `test/gameServer.test.ts` «versiones incompatibles» | ídem |
 | Zona dinámica y legible (02) | `game/src/shared/zone.ts` (5 fases, DPS creciente), render de círculo + objetivo punteado + temporizador HUD | `test/sim.test.ts` «zona se encoge», «daño de zona» | ídem |
 | Recolección / inventario (02, 06) | `game/src/shared/loot.ts`, `sim.pickup/applyItem/useConsumable` | `test/sim.test.ts` «recoger arma y consumibles», «núcleo de escudo» | ídem |
-| Combate ficticio abstracto con rarezas (02, 06) | `game/src/shared/weapons.ts` (5 armas originales), balas en `sim.ts` | `test/sim.test.ts` «dispara, pega y mata», «escudos absorben» | ídem |
+| Combate ficticio abstracto con rarezas (02, 06) | `game/src/shared/weapons.ts` (6 armas originales), balas y granadas AoE en `sim.ts` | `test/sim.test.ts` «dispara, pega y mata», «escudos absorben» | ídem |
 | Victoria y condición final (02) | `sim.checkVictory`, `placementOf`, `result` | `test/sim.test.ts` «victoria por último en pie» | ídem |
 | Bucle: despliegue → saqueo → zona → final (02) | fases lobby/drop/play/over en `sim.ts` + `gameServer` | `test/sim.test.ts` «lobby a drop a play», «despliegue por tiempo» | ídem |
 | Movimiento responsivo + colisiones (03) | `sim.movePlayer`, resolución círculo-rectángulo | `test/sim.test.ts` «colisiona con obstáculos» | ídem |
@@ -24,6 +24,12 @@ Conexión requisitos de la spec maestra (y dominios de las fichas) ↔ código �
 | Mi dispositivo hace de servidor (petición del propietario) | `client/p2p.ts` (WebRTC+STUN), `GameServer` transport-agnóstico | diseño; prueba E2E P2P pendiente (requiere 2 navegadores) | ROADMAP |
 | Salud/operaciones observables (19) | `/health` en `server/main.ts` | smoke test con `fetch` | log de humo |
 | Builds nativos Android/iOS/Windows/Linux | **NO implementado** — bloqueado: no hay toolchain de export en este entorno | — | ADR-0001, ROADMAP fases 5–6 |
+
+| Granadas de utilidad (06) | `sim.throwGrenade/stepGrenades/explodeGrenade` (AoE con caída de daño, auto-daño) | `test/sim.test.ts` «granadas explotan», «fuera del radio» | ídem |
+| Eventos ambientales (04) | airdrops legendarios cada 45 s dentro de la zona (`sim.spawnAirdrop`) | `test/sim.test.ts` «airdrops aparecen» | ídem |
+| Audio accesible con subtítulos (14, 13) | `client/audio.ts` (SFX sintetizados WebAudio, sin assets), cada cue tiene subtítulo | manual | — |
+| Presentación de alto nivel (petición del propietario) | `client/effects.ts` (partículas, anillos de explosión), sombras, viñeta, screen shake, tracers con glow, nombres de POI (`client/render.ts`) | manual | — |
+| Espectador con cambio de objetivo (02) | clic para ciclar jugadores vivos (`client/main.ts`) | manual | — |
 
 ## Bloqueos registrados
 

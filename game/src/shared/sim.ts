@@ -25,7 +25,17 @@ import {
   type GroundItem,
   type Inventory,
 } from './loot.js';
-import { RARITY_DAMAGE_MULT, WEAPONS, type WeaponId, type ConsumableId } from './weapons.js';
+import {
+  GRENADE_DAMAGE,
+  GRENADE_FUSE_MS,
+  GRENADE_RADIUS,
+  GRENADE_SPEED,
+  MAX_GRENADES,
+  RARITY_DAMAGE_MULT,
+  WEAPONS,
+  type WeaponId,
+  type ConsumableId,
+} from './weapons.js';
 import { initialZone, isOutsideZone, updateZone, zoneDps, type ZoneState } from './zone.js';
 import { sanitizeName } from './validation.js';
 
@@ -50,6 +60,7 @@ export interface SimPlayer {
   shield: number;
   alive: boolean;
   kills: number;
+  grenades: number;
   inventory: Inventory;
   input: PlayerInput;
   lastFireMs: number;
@@ -72,8 +83,18 @@ export interface Bullet {
   range: number;
 }
 
+export interface Grenade {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  ownerId: number;
+  fuseMs: number;
+}
+
 export interface SimEvent {
-  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone';
+  kind: 'kill' | 'shot' | 'hit' | 'pickup' | 'zone' | 'explosion' | 'airdrop';
   killerId?: number;
   killerName?: string;
   victimId?: number;
@@ -139,13 +160,16 @@ export class MatchSim {
   zone: ZoneState;
   players: SimPlayer[] = [];
   bullets: Bullet[] = [];
+  grenades: Grenade[] = [];
   items: GroundItem[] = [];
+  airdropTimerMs = 45_000;
   events: SimEvent[] = [];
   dropEndsAtMs: number;
   winnerId: number | null = null;
   private rng: Rng;
   private nextPlayerId = 1;
   private nextBulletId = 1;
+  private nextGrenadeId = 1;
   private nextPlacement = 0;
   private totalPlayers = 0;
 
@@ -191,6 +215,7 @@ export class MatchSim {
       shield: 0,
       alive: true,
       kills: 0,
+      grenades: 0,
       inventory: emptyInventory(),
       input: { mx: 0, my: 0, aim: 0, fire: false, seq: 0 },
       lastFireMs: -9999,
@@ -323,9 +348,12 @@ export class MatchSim {
         if (item.consumableId === 'botiquin') {
           if (inv.botiquines >= 5) return false;
           inv.botiquines += 1;
-        } else {
+        } else if (item.consumableId === 'escudo') {
           if (inv.escudos >= 5) return false;
           inv.escudos += 1;
+        } else {
+          if (player.inventory.grenades >= MAX_GRENADES) return false;
+          player.inventory.grenades += 1;
         }
         return true;
       }
@@ -358,6 +386,78 @@ export class MatchSim {
     player.inventory.weapons[player.inventory.activeWeapon] = null;
     player.inventory.activeWeapon = player.inventory.weapons[0] ? 0 : 1;
     return true;
+  }
+
+  throwGrenade(playerId: number): boolean {
+    const player = this.players.find((p) => p.id === playerId);
+    if (!player || !player.alive || this.phase !== 'play') return false;
+    if (player.inventory.grenades <= 0) return false;
+    player.inventory.grenades -= 1;
+    this.grenades.push({
+      id: this.nextGrenadeId++,
+      x: player.x + Math.cos(player.aim) * (PLAYER_RADIUS + 6),
+      y: player.y + Math.sin(player.aim) * (PLAYER_RADIUS + 6),
+      vx: Math.cos(player.aim) * GRENADE_SPEED,
+      vy: Math.sin(player.aim) * GRENADE_SPEED,
+      ownerId: player.id,
+      fuseMs: GRENADE_FUSE_MS,
+    });
+    return true;
+  }
+
+  private explodeGrenade(g: Grenade): void {
+    this.events.push({ kind: 'explosion', x: g.x, y: g.y, playerId: g.ownerId });
+    for (const p of this.players) {
+      if (!p.alive || p.landing) continue;
+      const d = dist(p, g);
+      if (d > GRENADE_RADIUS) continue;
+      const falloff = 1 - d / GRENADE_RADIUS;
+      const killer = this.players.find((k) => k.id === g.ownerId) ?? null;
+      this.applyDamage(p, GRENADE_DAMAGE * falloff, killer);
+    }
+  }
+
+  private stepGrenades(dtMs: number): void {
+    const dtSec = dtMs / 1000;
+    const alive: Grenade[] = [];
+    for (const g of this.grenades) {
+      g.fuseMs -= dtMs;
+      const friction = Math.max(0, 1 - dtSec * 2.2);
+      g.vx *= friction;
+      g.vy *= friction;
+      let nx = g.x + g.vx * dtSec;
+      let ny = g.y + g.vy * dtSec;
+      if (circleHitsObstacle(nx, ny, 4, this.map.obstacles)) {
+        g.vx *= -0.4;
+        g.vy *= -0.4;
+        nx = g.x;
+        ny = g.y;
+      }
+      g.x = clamp(nx, -WORLD_RADIUS, WORLD_RADIUS);
+      g.y = clamp(ny, -WORLD_RADIUS, WORLD_RADIUS);
+      if (g.fuseMs <= 0) this.explodeGrenade(g);
+      else alive.push(g);
+    }
+    this.grenades = alive;
+  }
+
+  private spawnAirdrop(): void {
+    const angle = this.rng.next() * Math.PI * 2;
+    const offset = this.rng.next() * this.zone.radius * 0.7;
+    const x = clamp(this.zone.cx + Math.cos(angle) * offset, -WORLD_RADIUS + 60, WORLD_RADIUS - 60);
+    const y = clamp(this.zone.cy + Math.sin(angle) * offset, -WORLD_RADIUS + 60, WORLD_RADIUS - 60);
+    this.items.push({
+      id: 0,
+      pos: { x, y },
+      kind: 'weapon',
+      weaponId: this.rng.pick(['francotirador', 'ametralladora', 'fusil'] as const),
+      rarity: 'legendario',
+    });
+    const idx = this.items.length - 1;
+    this.items[idx]!.id = 900000 + this.items[idx]!.id;
+    this.items.push({ id: 900001 + this.rng.int(1, 99999), pos: { x: x + 18, y }, kind: 'shieldcore', rarity: 'legendario', amount: 50 });
+    this.items.push({ id: 900002 + this.rng.int(1, 99999), pos: { x: x - 18, y }, kind: 'ammo', rarity: 'comun', amount: 60 });
+    this.events.push({ kind: 'airdrop', x, y });
   }
 
   private fireWeapon(player: SimPlayer, nowMs: number): void {
@@ -557,6 +657,13 @@ export class MatchSim {
       }
 
       this.stepBullets(dtMs);
+      this.stepGrenades(dtMs);
+
+      this.airdropTimerMs -= dtMs;
+      if (this.airdropTimerMs <= 0) {
+        this.airdropTimerMs = 45_000;
+        this.spawnAirdrop();
+      }
 
       updateZone(this.zone, dtMs, this.rng);
       const dps = zoneDps(this.zone);

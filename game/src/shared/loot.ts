@@ -1,5 +1,11 @@
 import { MAX_SHIELD, type Rarity, type Vec2 } from './constants.js';
-import { CONSUMABLES, WEAPONS, type ConsumableId, type WeaponId } from './weapons.js';
+import {
+  CONSUMABLES,
+  MAX_GRENADES,
+  WEAPONS,
+  type ConsumableId,
+  type WeaponId,
+} from './weapons.js';
 import { Rng } from './rng.js';
 
 export type ItemKind = 'weapon' | 'consumable' | 'ammo' | 'shieldcore';
@@ -19,6 +25,7 @@ export interface Inventory {
   activeWeapon: number;
   botiquines: number;
   escudos: number;
+  grenades: number;
   ammo: number;
 }
 
@@ -27,6 +34,7 @@ export const emptyInventory = (): Inventory => ({
   activeWeapon: 0,
   botiquines: 0,
   escudos: 0,
+  grenades: 0,
   ammo: 0,
 });
 
@@ -65,11 +73,12 @@ export const spawnLootAt = (rng: Rng, pos: Vec2, forceWeapon = false): GroundIte
     };
   }
   if (roll < 0.75) {
+    const consumableRoll = rng.next();
     return {
       id: nextItemId++,
       pos: { ...pos },
       kind: 'consumable',
-      consumableId: rng.chance(0.55) ? 'botiquin' : 'escudo',
+      consumableId: consumableRoll < 0.5 ? 'botiquin' : consumableRoll < 0.85 ? 'escudo' : 'granada',
       rarity: 'comun',
       amount: 1,
     };
@@ -91,7 +100,11 @@ export const itemLabelEs = (item: GroundItem): string => {
     case 'weapon':
       return `${WEAPONS[item.weaponId!].nameEs} (${item.rarity})`;
     case 'consumable':
-      return item.consumableId === 'botiquin' ? 'Botiquín' : 'Celda de escudo';
+      return item.consumableId === 'botiquin'
+        ? 'Botiquín'
+        : item.consumableId === 'escudo'
+          ? 'Celda de escudo'
+          : 'Granada';
     case 'ammo':
       return 'Munición';
     case 'shieldcore':
@@ -104,7 +117,11 @@ export const itemLabelEn = (item: GroundItem): string => {
     case 'weapon':
       return `${WEAPONS[item.weaponId!].nameEn} (${item.rarity})`;
     case 'consumable':
-      return item.consumableId === 'botiquin' ? 'Medkit' : 'Shield cell';
+      return item.consumableId === 'botiquin'
+        ? 'Medkit'
+        : item.consumableId === 'escudo'
+          ? 'Shield cell'
+          : 'Grenade';
     case 'ammo':
       return 'Ammo';
     case 'shieldcore':
@@ -113,3 +130,4 @@ export const itemLabelEn = (item: GroundItem): string => {
 };
 
 export const consumableDef = (id: ConsumableId) => CONSUMABLES[id];
+export { MAX_GRENADES };
