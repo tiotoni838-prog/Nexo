@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nexo Server"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/text" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="6dp">
+
+            <View
+                android:id="@+id/statusDot"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:background="@drawable/dot_off" />
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Bot detenido"
+                android:textSize="15sp"
+                android:textColor="@color/text_dim" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnToggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_button_start"
+            android:text="INICIAR BOT"
+            android:textStyle="bold"
+            android:textColor="@color/text" />
+
+        <TextView
+            android:id="@+id/logText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_field"
+            android:minHeight="100dp"
+            android:padding="12dp"
+            android:textSize="12sp"
+            android:textColor="@color/text_dim"
+            android:fontFamily="monospace" />
+
+        <TextView style="@style/SectionTitle" android:text="Discord" />
+        <EditText style="@style/Field" android:id="@+id/fieldToken"
+            android:inputType="textPassword"
+            android:hint="Token del bot de Discord" />
+
+        <TextView style="@style/SectionTitle" android:text="Inteligencia artificial" />
+        <EditText style="@style/Field" android:id="@+id/fieldApiBase"
+            android:inputType="textUri"
+            android:hint="URL de la API (ej. https://api.mistral.ai/v1)" />
+        <EditText style="@style/Field" android:id="@+id/fieldModel"
+            android:layout_marginTop="10dp"
+            android:inputType="text"
+            android:hint="Modelo (ej. mistral-large-latest)" />
+        <EditText style="@style/Field" android:id="@+id/fieldApiKey"
+            android:layout_marginTop="10dp"
+            android:inputType="textPassword"
+            android:hint="API key de la IA" />
+        <EditText style="@style/Field" android:id="@+id/fieldSystem"
+            android:layout_marginTop="10dp"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:gravity="top"
+            android:hint="Personalidad del bot (instrucciones del sistema)" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/bg_button_stop"
+            android:text="GUARDAR CONFIGURACIÓN"
+            android:textStyle="bold"
+            android:textColor="@color/text" />
+    </LinearLayout>
+</ScrollView>
