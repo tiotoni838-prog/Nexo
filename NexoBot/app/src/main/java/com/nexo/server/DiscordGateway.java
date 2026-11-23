@@ -18,10 +18,12 @@ public class DiscordGateway {
         void onStatus(boolean connected, String message);
 
         void onMessage(String channelId, String content, String authorName, boolean isBot);
+
+        void onLog(String message);
     }
 
     private static final String TAG = "DiscordGateway";
-    private static final int INTENTS = (1 << 9) | (1 << 15);
+    private static final int INTENTS = (1 << 9) | (1 << 12) | (1 << 15);
 
     private final OkHttpClient http;
     private final String token;
@@ -142,7 +144,16 @@ public class DiscordGateway {
                         boolean isBot = author.optBoolean("bot", false)
                                 || author.optString("id").equals(myUserId);
                         String content = d.optString("content", "");
-                        if (content.isEmpty()) break;
+                        if (content.isEmpty()) {
+                            if (!isBot) {
+                                listener.onLog("⚠️ Recibí tu mensaje sin texto. Ve al Portal "
+                                        + "de desarrollador de Discord → Bot → activa 「Message Content Intent」.");
+                            }
+                            break;
+                        }
+                        if (!isBot) {
+                            listener.onLog("💬 Mensaje de " + author.optString("username", "usuario"));
+                        }
                         listener.onMessage(d.getString("channel_id"), content,
                                 author.optString("username", "usuario"), isBot);
                     }

@@ -88,6 +88,11 @@ public class BotService extends Service {
             public void onMessage(String channelId, String content, String authorName, boolean isBot) {
                 handleIncoming(channelId, content, authorName, isBot);
             }
+
+            @Override
+            public void onLog(String message) {
+                log(message);
+            }
         });
         gateway.connect();
     }
