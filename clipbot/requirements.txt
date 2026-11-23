@@ -1,0 +1,5 @@
+discord.py>=2.3
+python-dotenv>=1.0
+yt-dlp
+faster-whisper
+openai>=1.30

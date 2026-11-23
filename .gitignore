@@ -1,0 +1,5 @@
+.env
+clipbot/.venv/
+clipbot/**/__pycache__/
+clipbot/jobs/
+*.log

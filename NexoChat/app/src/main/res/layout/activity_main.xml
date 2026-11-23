@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="NexoChat"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text" />
+
+        <TextView
+            android:id="@+id/btnNewChat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:text="＋ Nuevo"
+            android:textSize="14sp"
+            android:textColor="@color/text" />
+
+        <TextView
+            android:id="@+id/btnSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:text="⚙"
+            android:textSize="18sp"
+            android:textColor="@color/text" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/surface" />
+
+    <ListView
+        android:id="@+id/chatList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:stackFromBottom="true"
+        android:transcriptMode="normal"
+        android:padding="12dp"
+        android:clipToPadding="false"
+        android:scrollbars="none" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="bottom"
+        android:padding="10dp">
+
+        <EditText
+            android:id="@+id/inputField"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_input"
+            android:padding="14dp"
+            android:maxLines="5"
+            android:inputType="textMultiLine|textCapSentences"
+            android:hint="Escribe un mensaje…"
+            android:textSize="15sp"
+            android:textColor="@color/text" />
+
+        <TextView
+            android:id="@+id/btnSend"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_send"
+            android:gravity="center"
+            android:text="↑"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/black" />
+    </LinearLayout>
+</LinearLayout>
